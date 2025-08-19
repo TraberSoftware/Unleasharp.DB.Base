@@ -72,7 +72,7 @@ connector.WithAutomaticConnectionRenewal(true)
 
 ### One-liner Execution
 ```csharp
-var rows = ConfiguredDBConnector.QueryBuilder()
+var rows = DBConnector.QueryBuilder()
     .Build(query => query.Select().From("example_table"))
     .ToList<ExampleTable>();
 ```
