@@ -186,3 +186,15 @@ The `[Description]` attribute maps the C# enum value to its database representat
 - 🚧 **SQLite** - Work in Progress
 - 🚧 **PostgreSQL** - Work in Progress
 - 🚧 **MSSQL** - Work in Progress
+
+## 📦 Dependencies
+
+- [Unleasharp](https://github.com/TraberSoftware/Unleasharp) - Multipurpose library
+
+## 📋 Version Compatibility
+
+This library targets .NET 8.0 and later versions. For specific version requirements, please check the package dependencies.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
