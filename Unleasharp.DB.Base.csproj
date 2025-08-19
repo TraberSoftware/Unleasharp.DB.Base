@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <Authors>Traber</Authors>
+    <Description>A multi-purpose database query building library. Generic abstractions.</Description>
+
     <PackageProjectUrl>https://github.com/TraberSoftware/Unleasharp.DB.Base</PackageProjectUrl>
   </PropertyGroup>
   
