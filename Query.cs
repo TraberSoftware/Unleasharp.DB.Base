@@ -73,27 +73,27 @@ public class Query<DBQueryType> : Renderable
         this.ParentQuery = this;
     }
 
-    public Query(Query<DBQueryType> ParentQuery) {
-        this.ParentQuery = ParentQuery;
+    public Query(Query<DBQueryType> parentQuery) {
+        this.ParentQuery = parentQuery;
     }
 
-    public Query<DBQueryType> WithParentQuery(Query<DBQueryType> ParentQuery) {
-        this.ParentQuery = ParentQuery;
+    public Query<DBQueryType> WithParentQuery(Query<DBQueryType> parentQuery) {
+        this.ParentQuery = parentQuery;
 
         return (DBQueryType) this;
     }
 
-    public string PrepareQueryValue(dynamic QueryValue, bool Escape) {
-        string Prefix      = "@prepared_query_value_";
-        Query<DBQueryType> TargetQuery = this.ParentQuery != null ? this.ParentQuery : this;
-        string Label       = $"{Prefix}{TargetQuery.QueryPreparedData.Count}";
+    public string PrepareQueryValue(dynamic queryValue, bool escape) {
+        string prefix      = "@prepared_query_value_";
+        Query<DBQueryType> targetQuery = this.ParentQuery != null ? this.ParentQuery : this;
+        string label       = $"{prefix}{targetQuery.QueryPreparedData.Count}";
 
-        TargetQuery.QueryPreparedData.Add(Label, new PreparedValue {
-            Value       = QueryValue,
-            EscapeValue = Escape
+        targetQuery.QueryPreparedData.Add(label, new PreparedValue {
+            Value       = queryValue,
+            EscapeValue = escape
         });
 
-        return Label;
+        return label;
     }
     #endregion
 
@@ -127,28 +127,28 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Query rendering
-    public virtual string RenderPrepared(bool Force = true) {
-        this._RenderPrepared(Force);
+    public virtual string RenderPrepared(bool force = true) {
+        this._RenderPrepared(force);
 
         return this.QueryRendered;
     }
 
-    public virtual void _RenderPrepared(bool Force = true) {
+    public virtual void _RenderPrepared(bool force = true) {
         throw new NotImplementedException();
     }
 
-    public virtual string Render(bool Force = true) {
-        this._Render(Force);
+    public virtual string Render(bool force = true) {
+        this._Render(force);
 
         return this.QueryPreparedString;
     }
 
-    public virtual void _Render(bool Force = true) {
-        if (Force) {
+    public virtual void _Render(bool force = true) {
+        if (force) {
             this.ResetPreparedData();
         }
 
-        if (string.IsNullOrWhiteSpace(this.QueryPreparedString) || Force) {
+        if (string.IsNullOrWhiteSpace(this.QueryPreparedString) || force) {
             switch (this.QueryType) {
                 case QueryType.COUNT:
                     this._RenderCountQuery();
@@ -174,7 +174,7 @@ public class Query<DBQueryType> : Renderable
         }
     }
     protected virtual void _RenderCountQuery() {
-        List<string> QueryGroups = new List<string> {
+        List<string> queryGroups = new List<string> {
             _RenderCountSentence      (),
             _RenderFromSentence       (),
             _RenderJoinSentence       (),
@@ -184,12 +184,12 @@ public class Query<DBQueryType> : Renderable
             _RenderSelectExtraSentence()
         };
 
-        QueryPreparedString = string.Join(" ", QueryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
+        QueryPreparedString = string.Join(" ", queryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
     }
 
 
     protected virtual void _RenderSelectQuery() {
-        List<string> QueryGroups = new List<string> {
+        List<string> queryGroups = new List<string> {
             _RenderSelectSentence     (),
             _RenderFromSentence       (),
             _RenderJoinSentence       (),
@@ -201,20 +201,20 @@ public class Query<DBQueryType> : Renderable
             _RenderSelectExtraSentence()
         };
 
-        QueryPreparedString = string.Join(" ", QueryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
+        QueryPreparedString = string.Join(" ", queryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
     }
 
     protected virtual void _RenderInsertQuery() {
-        List<string> QueryGroups = new List<string> {
+        List<string> queryGroups = new List<string> {
             _RenderInsertIntoSentence  (),
             _RenderInsertValuesSentence(),
         };
 
-        QueryPreparedString = string.Join(" ", QueryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
+        QueryPreparedString = string.Join(" ", queryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
     }
 
     protected virtual void _RenderUpdateQuery() {
-        List<string> QueryGroups = new List<string> {
+        List<string> queryGroups = new List<string> {
             _RenderUpdateSentence     (),
             _RenderSetSentence        (),
             _RenderWhereSentence      (),
@@ -222,18 +222,18 @@ public class Query<DBQueryType> : Renderable
             _RenderLimitSentence      ()
         };
 
-        QueryPreparedString = string.Join(" ", QueryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
+        QueryPreparedString = string.Join(" ", queryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
     }
 
     protected virtual void _RenderDeleteQuery() {
-        List<string> QueryGroups = new List<string> {
+        List<string> queryGroups = new List<string> {
             _RenderDeleteSentence(),
             _RenderWhereSentence (),
             _RenderOrderSentence (),
             _RenderLimitSentence ()
         };
 
-        QueryPreparedString = string.Join(" ", QueryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
+        QueryPreparedString = string.Join(" ", queryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
     }
 
     protected virtual void _RenderCreateQuery() {
@@ -242,8 +242,8 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Public query building methods
-    public virtual DBQueryType SetQueryType(QueryType QueryType) {
-        this.QueryType = QueryType;
+    public virtual DBQueryType SetQueryType(QueryType queryType) {
+        this.QueryType = queryType;
 
         return (DBQueryType) this;
     }
@@ -281,36 +281,36 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Query building - Select
-    public virtual DBQueryType Select(Select<DBQueryType> Select) {
+    public virtual DBQueryType Select(Select<DBQueryType> select) {
         this.SetQueryType(QueryType.SELECT);
 
-        this.QuerySelect.Add(Select);
+        this.QuerySelect.Add(select);
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType Select(FieldSelector Field) {
+    public virtual DBQueryType Select(FieldSelector field) {
         return this.Select(new Select<DBQueryType> {
-            Field = Field
+            Field = field
         });
     }
 
-    public virtual DBQueryType Select(Query<DBQueryType> Subquery, string Alias = null) {
+    public virtual DBQueryType Select(Query<DBQueryType> subquery, string alias = null) {
         return this.Select(new Select<DBQueryType> {
-            Subquery = Subquery,
-            Alias    = Alias
+            Subquery = subquery,
+            Alias    = alias
         });
     }
 
-    public virtual DBQueryType Select(string FieldName, bool Escape = true) {
+    public virtual DBQueryType Select(string fieldName, bool escape = true) {
         return this.Select(new Select<DBQueryType> {
-            Field = new FieldSelector(FieldName, Escape)
+            Field = new FieldSelector(fieldName, escape)
         });
     }
 
-    public virtual DBQueryType Select(List<string> FieldNames, bool Escape = true) {
-        foreach (string FieldName in FieldNames) {
-            this.Select(FieldName, Escape);
+    public virtual DBQueryType Select(List<string> fieldNames, bool escape = true) {
+        foreach (string fieldName in fieldNames) {
+            this.Select(fieldName, escape);
         }
 
         return (DBQueryType) this;
@@ -318,50 +318,50 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Query building - Values for INSERT/SET
-    public virtual DBQueryType Set(Where<DBQueryType> SetValue) {
-        this.QuerySet.Add(SetValue);
+    public virtual DBQueryType Set(Where<DBQueryType> setValue) {
+        this.QuerySet.Add(setValue);
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType Set(string FieldName, dynamic Value, bool Escape = true) {
+    public virtual DBQueryType Set(string fieldName, dynamic value, bool escape = true) {
         return this.Set(new Where<DBQueryType> {
-            Field       = new FieldSelector(FieldName),
-            Value       = Value,
-            EscapeValue = Escape
+            Field       = new FieldSelector(fieldName),
+            Value       = value,
+            EscapeValue = escape
         });
     }
 
-    public virtual DBQueryType Value(Dictionary<string, dynamic> Row, bool SkipNullValues = true) {
-        foreach (string Column in Row.Keys) {
-            if (!this.QueryColumns.Contains(Column)) {
-                this.QueryColumns.Add(Column);
+    public virtual DBQueryType Value(Dictionary<string, dynamic> row, bool skipNullValues = true) {
+        foreach (string column in row.Keys) {
+            if (!this.QueryColumns.Contains(column)) {
+                this.QueryColumns.Add(column);
             }
         }
-        this.QueryValues.Add(Row);
+        this.QueryValues.Add(row);
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType Value<T>(T Row, bool SkipNullValues = true) where T : class {
-        return this.Value(Row.ToDynamicDictionary());
+    public virtual DBQueryType Value<T>(T row, bool skipNullValues = true) where T : class {
+        return this.Value(row.ToDynamicDictionary());
     }
 
-    public virtual DBQueryType Value(object Row, bool SkipNullValues = true) {
-        return this.Value(Row.ToDynamicDictionary());
+    public virtual DBQueryType Value(object row, bool skipNullValues = true) {
+        return this.Value(row.ToDynamicDictionary());
     }
 
-    public virtual DBQueryType Values<T>(List<T> Rows, bool SkipNullValues = true) where T : class {
-        foreach (object Row in Rows) {
-            this.Value(Row, SkipNullValues);
+    public virtual DBQueryType Values<T>(List<T> rows, bool skipNullValues = true) where T : class {
+        foreach (object row in rows) {
+            this.Value(row, skipNullValues);
         }
 
         return (DBQueryType)this;
     }
 
-    public virtual DBQueryType Values(List<object> Rows, bool SkipNullValues = true) {
-        foreach (object Row in Rows) {
-            this.Value(Row, SkipNullValues);
+    public virtual DBQueryType Values(List<object> rows, bool skipNullValues = true) {
+        foreach (object row in rows) {
+            this.Value(row, skipNullValues);
         }
 
         return (DBQueryType)this;
@@ -369,100 +369,100 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Query building - From/Into
-    public virtual DBQueryType From(From<DBQueryType> FromSentence) {
-        this.QueryFrom.Add(FromSentence);
+    public virtual DBQueryType From(From<DBQueryType> fromSentence) {
+        this.QueryFrom.Add(fromSentence);
 
         return (DBQueryType) this;
     }
 
     public virtual DBQueryType From<TableClass>() {
-        string TableName      = typeof(TableClass).Name;
-        Table  TableAttribute = typeof(TableClass).GetCustomAttribute<Table>();
-        if (TableAttribute != null) {
-            TableName = TableAttribute.Name;
+        string tableName      = typeof(TableClass).Name;
+        Table  tableAttribute = typeof(TableClass).GetCustomAttribute<Table>();
+        if (tableAttribute != null) {
+            tableName = tableAttribute.Name;
         }
 
         this.QueryFrom.Add(new From<DBQueryType> {
-            Table       = TableName,
+            Table       = tableName,
             EscapeTable = true,
         });
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType From(string TableName) {
+    public virtual DBQueryType From(string tableName) {
         return this.From(new From<DBQueryType> {
-            Table       = TableName,
+            Table       = tableName,
             EscapeTable = true
         });
     }
 
-    public virtual DBQueryType Into(From<DBQueryType> FromSentence) {
-        return this.From(FromSentence);
+    public virtual DBQueryType Into(From<DBQueryType> fromSentence) {
+        return this.From(fromSentence);
     }
 
     public virtual DBQueryType Into<TableClass>() {
         return this.From<TableClass>();
     }
 
-    public virtual DBQueryType Into(string TableName) {
-        return this.From(TableName);
+    public virtual DBQueryType Into(string tableName) {
+        return this.From(tableName);
     }
     #endregion
 
     #region Query building - Join
-    public virtual DBQueryType Join(Join<DBQueryType> Sentence) {
-        this.QueryJoin.Add(Sentence);
+    public virtual DBQueryType Join(Join<DBQueryType> sentence) {
+        this.QueryJoin.Add(sentence);
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType Join(string TableName, Where<DBQueryType> Condition, JoinDirection Direction = JoinDirection.NONE) {
+    public virtual DBQueryType Join(string tableName, Where<DBQueryType> condition, JoinDirection direction = JoinDirection.NONE) {
         return this.Join(new Join<DBQueryType> {
-            Direction   = Direction,
-            Table       = TableName,
+            Direction   = direction,
+            Table       = tableName,
             EscapeTable = true,
-            Condition   = Condition
+            Condition   = condition
         });
     }
 
-    public virtual DBQueryType Join(string TableName, string FieldLeft, string FieldRight, WhereComparer Comparer = WhereComparer.EQUALS, JoinDirection Direction = JoinDirection.NONE) {
+    public virtual DBQueryType Join(string tableName, string fieldLeft, string fieldRight, WhereComparer comparer = WhereComparer.EQUALS, JoinDirection direction = JoinDirection.NONE) {
         return this.Join(new Join<DBQueryType> {
-            Direction   = Direction,
-            Table       = TableName,
+            Direction   = direction,
+            Table       = tableName,
             EscapeTable = true,
             Condition   = new Where<DBQueryType> {
-                Field       = new FieldSelector { Field = FieldLeft,  Escape = true },
-                ValueField  = new FieldSelector { Field = FieldRight, Escape = true },
-                Comparer    = Comparer,
+                Field       = new FieldSelector { Field = fieldLeft,  Escape = true },
+                ValueField  = new FieldSelector { Field = fieldRight, Escape = true },
+                Comparer    = comparer,
                 EscapeValue = true
             }
         });
     }
 
-    public virtual DBQueryType Join(string TableName, string TableLeft, string FieldLeft, string TableRight, string FieldRight, WhereComparer Comparer = WhereComparer.EQUALS, JoinDirection Direction = JoinDirection.NONE) {
+    public virtual DBQueryType Join(string tableName, string tableLeft, string fieldLeft, string tableRight, string fieldRight, WhereComparer comparer = WhereComparer.EQUALS, JoinDirection direction = JoinDirection.NONE) {
         return this.Join(new Join<DBQueryType> {
-            Direction   = Direction,
-            Table       = TableName,
+            Direction   = direction,
+            Table       = tableName,
             EscapeTable = true,
             Condition   = new Where<DBQueryType> {
-                Field       = new FieldSelector { Table = TableLeft,  Field = FieldLeft,  Escape = true },
-                ValueField  = new FieldSelector { Table = TableRight, Field = FieldRight, Escape = true },
-                Comparer    = Comparer,
+                Field       = new FieldSelector { Table = tableLeft,  Field = fieldLeft,  Escape = true },
+                ValueField  = new FieldSelector { Table = tableRight, Field = fieldRight, Escape = true },
+                Comparer    = comparer,
                 EscapeValue = true
             }
         });
     }
 
-    public virtual DBQueryType Join(string TableName, FieldSelector Left, FieldSelector Right, WhereComparer Comparer = WhereComparer.EQUALS, JoinDirection Direction = JoinDirection.NONE) {
+    public virtual DBQueryType Join(string tableName, FieldSelector left, FieldSelector right, WhereComparer comparer = WhereComparer.EQUALS, JoinDirection direction = JoinDirection.NONE) {
         return this.Join(new Join<DBQueryType> {
-            Direction   = Direction,
-            Table       = TableName,
+            Direction   = direction,
+            Table       = tableName,
             EscapeTable = true,
             Condition   = new Where<DBQueryType> {
-                Field       = Left,
-                ValueField  = Right,
-                Comparer    = Comparer,
+                Field       = left,
+                ValueField  = right,
+                Comparer    = comparer,
                 EscapeValue = true
             }
         });
@@ -470,104 +470,104 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Query building - Where
-    public virtual DBQueryType Where(Where<DBQueryType> WhereSentence) {
-        this.QueryWhere.Add(WhereSentence);
+    public virtual DBQueryType Where(Where<DBQueryType> whereSentence) {
+        this.QueryWhere.Add(whereSentence);
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType Where(string FieldName, dynamic FieldValue) {
+    public virtual DBQueryType Where(string fieldName, dynamic fieldValue) {
         return this.Where(new Where<DBQueryType> {
-            Field  = new FieldSelector(FieldName),
-            Value = FieldValue
+            Field  = new FieldSelector(fieldName),
+            Value = fieldValue
         });
     }
 
-    public virtual DBQueryType Where(FieldSelector Left, FieldSelector Right) {
+    public virtual DBQueryType Where(FieldSelector left, FieldSelector right) {
         return this.Where(new Where<DBQueryType> {
-            Field      = Left,
-            ValueField = Right
+            Field      = left,
+            ValueField = right
         });
     }
     #endregion
 
     #region Query building - WhereIn
-    public virtual DBQueryType WhereIn(WhereIn<DBQueryType> WhereInSentence) {
-        this.QueryWhereIn.Add(WhereInSentence);
+    public virtual DBQueryType WhereIn(WhereIn<DBQueryType> whereInSentence) {
+        this.QueryWhereIn.Add(whereInSentence);
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType WhereIn(string FieldName, List<dynamic> FieldValues) {
+    public virtual DBQueryType WhereIn(string fieldName, List<dynamic> fieldValues) {
         return this.WhereIn(new WhereIn<DBQueryType> {
-            Field  = new FieldSelector(FieldName), 
-            Values = FieldValues
+            Field  = new FieldSelector(fieldName), 
+            Values = fieldValues
         });
     }
 
-    public virtual DBQueryType WhereIn(string FieldName, Query<DBQueryType> Subquery) {
+    public virtual DBQueryType WhereIn(string fieldName, Query<DBQueryType> subquery) {
         return this.WhereIn(new WhereIn<DBQueryType> {
-            Field    = new FieldSelector(FieldName),
-            Subquery = Subquery
+            Field    = new FieldSelector(fieldName),
+            Subquery = subquery
         });
     }
     #endregion
 
     #region Query building - Group By
-    public virtual DBQueryType GroupBy(GroupBy Group) {
-        this.QueryGroup.Add(Group);
+    public virtual DBQueryType GroupBy(GroupBy group) {
+        this.QueryGroup.Add(group);
 
         return (DBQueryType) this;
     }
-    public virtual DBQueryType GroupBy(FieldSelector Field) {
+    public virtual DBQueryType GroupBy(FieldSelector field) {
         return this.GroupBy(new GroupBy {
-            Field = Field
+            Field = field
         });
     }
 
-    public virtual DBQueryType GroupBy(string FieldName, string TableName = null, bool Escape = true) {
-        return this.GroupBy(new FieldSelector(TableName, FieldName, Escape));
+    public virtual DBQueryType GroupBy(string fieldName, string tableName = null, bool escape = true) {
+        return this.GroupBy(new FieldSelector(tableName, fieldName, escape));
     }
     #endregion
 
     #region Query building - Order By
-    public virtual DBQueryType OrderBy(OrderBy OrderSentence) {
-        this.QueryOrder.Add(OrderSentence);
+    public virtual DBQueryType OrderBy(OrderBy orderSentence) {
+        this.QueryOrder.Add(orderSentence);
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType OrderBy(string FieldName, OrderDirection Direction = OrderDirection.ASC, bool EscapeField = true) {
+    public virtual DBQueryType OrderBy(string fieldName, OrderDirection direction = OrderDirection.ASC, bool escapeField = true) {
         return this.OrderBy(new QueryBuilding.OrderBy {
             Field     = new FieldSelector {
-                Field  = FieldName,
-                Escape = EscapeField,
+                Field  = fieldName,
+                Escape = escapeField,
             },
-            Direction = Direction
+            Direction = direction
         });
     }
     #endregion
 
     #region Query building - Limit
-    public virtual DBQueryType Limit(Limit LimitSentence) {
-        this.QueryLimit = LimitSentence;
+    public virtual DBQueryType Limit(Limit limitSentence) {
+        this.QueryLimit = limitSentence;
 
         return (DBQueryType) this;
     }
 
-    public virtual DBQueryType Limit(long Count, long Offset = 0) {
+    public virtual DBQueryType Limit(long count, long offset = 0) {
         return this.Limit(new Limit {
-            Count  = Count,
-            Offset = Offset
+            Count  = count,
+            Offset = offset
         });
     }
     #endregion
 
     #region Query building - Create
-    public DBQueryType Create(Type TableType) {
+    public DBQueryType Create(Type tableType) {
         this.SetQueryType(QueryType.CREATE);
 
-        this.QueryCreate = TableType;
+        this.QueryCreate = tableType;
 
         return (DBQueryType)this;
     }
@@ -599,6 +599,6 @@ public class Query<DBQueryType> : Renderable
     protected virtual string _RenderInsertValuesSentence() { throw new NotImplementedException(); }
 
     protected virtual string _RenderCreateSentence<T>() where T : Table { throw new NotImplementedException(); }
-    protected virtual string _RenderCreateSentence(Type TableType)      { throw new NotImplementedException(); }
+    protected virtual string _RenderCreateSentence(Type tableType)      { throw new NotImplementedException(); }
     #endregion
 }

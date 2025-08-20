@@ -15,14 +15,14 @@ public class FieldSelector : Renderable {
 
     public FieldSelector() { }
 
-    public FieldSelector(string Field, bool Escape = true) {
-        this.Field  = Field;
-        this.Escape = Escape;
+    public FieldSelector(string field, bool escape = true) {
+        this.Field  = field;
+        this.Escape = escape;
     }
 
-    public FieldSelector(string Table, string Field, bool Escape = true) {
-        this.Table  = Table;
-        this.Field  = Field;
-        this.Escape = Escape;
+    public FieldSelector(string table, string field, bool escape = true) {
+        this.Table  = table;
+        this.Field  = field;
+        this.Escape = escape;
     }
 }

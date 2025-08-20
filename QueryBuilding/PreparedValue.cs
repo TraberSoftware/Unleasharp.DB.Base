@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Unleasharp.DB.Base.QueryBuilding {
-    public class PreparedValue {
-        public dynamic Value;
-        public bool    EscapeValue;
-    }
+namespace Unleasharp.DB.Base.QueryBuilding;
+
+public class PreparedValue {
+    public dynamic Value;
+    public bool    EscapeValue;
 }

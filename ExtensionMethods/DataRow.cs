@@ -9,140 +9,140 @@ using System.Threading.Tasks;
 using Unleasharp.DB.Base.SchemaDefinition;
 using Unleasharp.ExtensionMethods;
 
-namespace Unleasharp.DB.Base.ExtensionMethods {
-    public static class DataRowExtension {
-        public static T GetObject<T>(this DataRow Row) where T : class {
-            T Serialized = Activator.CreateInstance<T>();
+namespace Unleasharp.DB.Base.ExtensionMethods;
 
-            #region Field serialization
-            foreach (FieldInfo Field in typeof(T).GetFields()) {
-                string     DBFieldName = Field.Name;
-                string  ClassFieldName = Field.Name;
-                Type    FieldType      = Field.FieldType;
+public static class DataRowExtension {
+    public static T GetObject<T>(this DataRow row) where T : class {
+        T serialized = Activator.CreateInstance<T>();
 
-                if (Nullable.GetUnderlyingType(FieldType) != null) {
-                    FieldType = Nullable.GetUnderlyingType(FieldType);
-                }
+        #region Field serialization
+        foreach (FieldInfo field in typeof(T).GetFields()) {
+            string     dbFieldName = field.Name;
+            string  classFieldName = field.Name;
+            Type    fieldType      = field.FieldType;
 
-                foreach (Attribute FieldAttribute in Field.GetCustomAttributes()) {
-                    if (
-                        FieldAttribute.GetType().BaseType == typeof(NamedStructure)
-                        ||
-                        FieldAttribute.GetType()          == typeof(NamedStructure)
-                    ) { 
-                        DBFieldName = ((NamedStructure) FieldAttribute).Name;
-                    }
-                }
-
-                MethodInfo DataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
-                MethodInfo DataRowFieldGenericMethod = DataRowFieldMethod.MakeGenericMethod(FieldType);
-
-                //.Invoke(Row.GetType(), new object[] { Row, FieldType, DBFieldName });
-
-                if (FieldType.IsEnum) {
-                    string EnumValueString = Row.Field<string>(DBFieldName);
-
-                    if (EnumValueString == null) {
-                        Field.SetValue(
-                            Serialized,
-                            null
-                        );
-
-                        continue;
-                    }
-
-                    bool ValueFound = false;
-                    foreach (Enum EnumValue in Enum.GetValues(FieldType)) {
-                        string EnumDescription = EnumValue.GetDescription();
-                        if (
-                            EnumDescription == EnumValueString
-                        ) {
-                            Field.SetValue(
-                                Serialized,
-                                EnumValue
-                            );
-                            ValueFound = true;
-
-                            break;
-                        }
-                    }
-
-                    if (ValueFound) {
-                        continue;
-                    }
-                }
-
-                Field.SetValue(
-                    Serialized,
-                    DataRowFieldGenericMethod.Invoke(null, new object[] { Row, DBFieldName })
-                );
+            if (Nullable.GetUnderlyingType(fieldType) != null) {
+                fieldType = Nullable.GetUnderlyingType(fieldType);
             }
-            #endregion
 
-            #region Property Serialization
-            foreach (PropertyInfo Property in typeof(T).GetProperties()) {
-                string     DBFieldName = Property.Name;
-                string  ClassFieldName = Property.Name;
-                Type    PropertyType   = Property.PropertyType;
+            foreach (Attribute fieldAttribute in field.GetCustomAttributes()) {
+                if (
+                    fieldAttribute.GetType().BaseType == typeof(NamedStructure)
+                    ||
+                    fieldAttribute.GetType()          == typeof(NamedStructure)
+                ) { 
+                    dbFieldName = ((NamedStructure) fieldAttribute).Name;
+                }
+            }
 
-                if (Nullable.GetUnderlyingType(PropertyType) != null) {
-                    PropertyType = Nullable.GetUnderlyingType(PropertyType);
+            MethodInfo dataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
+            MethodInfo dataRowFieldGenericMethod = dataRowFieldMethod.MakeGenericMethod(fieldType);
+
+            //.Invoke(Row.GetType(), new object[] { Row, FieldType, DBFieldName });
+
+            if (fieldType.IsEnum) {
+                string enumValueString = row.Field<string>(dbFieldName);
+
+                if (enumValueString == null) {
+                    field.SetValue(
+                        serialized,
+                        null
+                    );
+
+                    continue;
                 }
 
-                foreach (Attribute PropertyAttribute in Property.GetCustomAttributes()) {
+                bool valueFound = false;
+                foreach (Enum enumValue in Enum.GetValues(fieldType)) {
+                    string enumDescription = enumValue.GetDescription();
                     if (
-                        PropertyAttribute.GetType().BaseType == typeof(NamedStructure)
-                        ||
-                        PropertyAttribute.GetType() == typeof(NamedStructure)
+                        enumDescription == enumValueString
                     ) {
-                        DBFieldName = ((NamedStructure)PropertyAttribute).Name;
-                    }
-                }
-
-                MethodInfo DataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
-                MethodInfo DataRowFieldGenericMethod = DataRowFieldMethod.MakeGenericMethod(PropertyType);
-
-                if (PropertyType.IsEnum) {
-                    string EnumValueString = Row.Field<string>(DBFieldName);
-
-                    if (EnumValueString == null) {
-                        Property.SetValue(
-                            Serialized,
-                            null
+                        field.SetValue(
+                            serialized,
+                            enumValue
                         );
+                        valueFound = true;
 
-                        continue;
-                    }
-
-                    bool ValueFound = false;
-                    foreach (Enum EnumValue in Enum.GetValues(PropertyType)) {
-                        string EnumDescription = EnumValue.GetDescription();
-                        if (
-                            EnumDescription == EnumValueString
-                        ) {
-                            Property.SetValue(
-                                Serialized,
-                                EnumValue
-                            );
-                            ValueFound = true;
-
-                            break;
-                        }
-                    }
-
-                    if (ValueFound) {
-                        continue;
+                        break;
                     }
                 }
 
-                Property.SetValue(
-                    Serialized,
-                    DataRowFieldGenericMethod.Invoke(null, new object[] { Row, DBFieldName })
-                );
+                if (valueFound) {
+                    continue;
+                }
             }
-            #endregion
 
-            return Serialized;
+            field.SetValue(
+                serialized,
+                dataRowFieldGenericMethod.Invoke(null, new object[] { row, dbFieldName })
+            );
         }
+        #endregion
+
+        #region Property Serialization
+        foreach (PropertyInfo property in typeof(T).GetProperties()) {
+            string     dbFieldName = property.Name;
+            string  classFieldName = property.Name;
+            Type    propertyType   = property.PropertyType;
+
+            if (Nullable.GetUnderlyingType(propertyType) != null) {
+                propertyType = Nullable.GetUnderlyingType(propertyType);
+            }
+
+            foreach (Attribute propertyAttribute in property.GetCustomAttributes()) {
+                if (
+                    propertyAttribute.GetType().BaseType == typeof(NamedStructure)
+                    ||
+                    propertyAttribute.GetType() == typeof(NamedStructure)
+                ) {
+                    dbFieldName = ((NamedStructure)propertyAttribute).Name;
+                }
+            }
+
+            MethodInfo dataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
+            MethodInfo dataRowFieldGenericMethod = dataRowFieldMethod.MakeGenericMethod(propertyType);
+
+            if (propertyType.IsEnum) {
+                string enumValueString = row.Field<string>(dbFieldName);
+
+                if (enumValueString == null) {
+                    property.SetValue(
+                        serialized,
+                        null
+                    );
+
+                    continue;
+                }
+
+                bool valueFound = false;
+                foreach (Enum enumValue in Enum.GetValues(propertyType)) {
+                    string enumDescription = enumValue.GetDescription();
+                    if (
+                        enumDescription == enumValueString
+                    ) {
+                        property.SetValue(
+                            serialized,
+                            enumValue
+                        );
+                        valueFound = true;
+
+                        break;
+                    }
+                }
+
+                if (valueFound) {
+                    continue;
+                }
+            }
+
+            property.SetValue(
+                serialized,
+                dataRowFieldGenericMethod.Invoke(null, new object[] { row, dbFieldName })
+            );
+        }
+        #endregion
+
+        return serialized;
     }
 }

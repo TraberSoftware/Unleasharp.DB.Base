@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Unleasharp.DB.Base.SchemaDefinition {
-    public class NamedStructure : Attribute {
-        public string Name { get; }
+namespace Unleasharp.DB.Base.SchemaDefinition;
 
-        public NamedStructure() { }
+public class NamedStructure : Attribute {
+    public string Name { get; }
 
-        public NamedStructure(string Name) {
-            this.Name = Name;
-        }
+    public NamedStructure() { }
+
+    public NamedStructure(string name) {
+        this.Name = name;
     }
 }
