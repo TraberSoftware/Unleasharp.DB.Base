@@ -24,6 +24,5 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Unleasharp" Version="1.0.0" />
   </ItemGroup>
 </Project>
