@@ -511,10 +511,39 @@ public class Query<DBQueryType> : Renderable
             Subquery = subquery
         });
     }
-    #endregion
+	#endregion
 
-    #region Query building - Group By
-    public virtual DBQueryType GroupBy(GroupBy group) {
+	#region Query building - Where LIKE
+	public virtual DBQueryType WhereLike(string fieldName, string fieldValue) {
+		return this.Where(new Where<DBQueryType> {
+			Field       = new FieldSelector(fieldName),
+            Value       = fieldValue,
+            Comparer    = WhereComparer.LIKE,
+			EscapeValue = true
+		});
+	}
+
+	public virtual DBQueryType WhereLikeLeft(string fieldName, string fieldValue) {
+		return this.Where(new Where<DBQueryType> {
+			Field       = new FieldSelector(fieldName),
+            Value       = $"%{fieldValue.TrimStart('%')}",
+            Comparer    = WhereComparer.LIKE_LEFT,
+			EscapeValue = true
+		});
+	}
+
+	public virtual DBQueryType WhereLikeRight(string fieldName, string fieldValue) {
+		return this.Where(new Where<DBQueryType> {
+			Field       = new FieldSelector(fieldName),
+            Value       = $"{fieldValue.TrimEnd('%')}%",
+            Comparer    = WhereComparer.LIKE_RIGHT,
+            EscapeValue = true
+		});
+	}
+	#endregion
+
+	#region Query building - Group By
+	public virtual DBQueryType GroupBy(GroupBy group) {
         this.QueryGroup.Add(group);
 
         return (DBQueryType) this;
