@@ -131,25 +131,25 @@ using Unleasharp.DB.Base.SchemaDefinition;
 [PrimaryKey("id")]
 [UniqueKey("id", "id", "_enum")]
 public class ExampleTable {
-    [Column("id", ColumnDataType.UInt64, Unsigned = true, PrimaryKey = true, AutoIncrement = true, NotNull = true)]
+    [Column("id",          ColumnDataType.UInt64, Unsigned = true, PrimaryKey = true, AutoIncrement = true, NotNull = true)]
     public ulong? Id              { get; set; }
 
     [Column("_mediumtext", ColumnDataType.Text)]
     public string MediumText      { get; set; }
 
-    [Column("_longtext", ColumnDataType.Text)]
+    [Column("_longtext",   ColumnDataType.Text)]
     public string Longtext        { get; set; }
 
-    [Column("_json", ColumnDataType.Json)]
+    [Column("_json",       ColumnDataType.Json)]
     public string Json            { get; set; }
 
-    [Column("_longblob", ColumnDataType.Binary)]
+    [Column("_longblob",   ColumnDataType.Binary)]
     public byte[] CustomFieldName { get; set; }
 
-    [Column("_enum", ColumnDataType.Enum)]
+    [Column("_enum",       ColumnDataType.Enum)]
     public EnumExample? Enum      { get; set; }
 
-    [Column("_varchar", "varchar", Length = 255)]
+    [Column("_varchar",    "varchar", Length = 255)]
     public string Varchar         { get; set; }
 }
 ```
