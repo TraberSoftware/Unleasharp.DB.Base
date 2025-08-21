@@ -14,10 +14,13 @@ namespace Unleasharp.DB.Base;
 /// It ensures thread-safety by spawning thread-owned connections
 /// </summary>
 /// <typeparam name="DBConnectorType">The Type of the DB Connector to spawn connections of</typeparam>
-public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnectorSettingsType> 
+public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnectorSettingsType, DBConnectionType, DBQueryBuilderType, DBQueryType> 
     where DBConnectorType         : Connector<DBConnectorType, DBConnectorSettingsType>
     where DBConnectorSettingsType : DbConnectionStringBuilder
-    where DBConnectorManagerType  : ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnectorSettingsType>
+    where DBConnectorManagerType  : ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnectorSettingsType, DBConnectionType, DBQueryBuilderType, DBQueryType>
+    where DBConnectionType        : DbConnection
+	where DBQueryBuilderType      : QueryBuilder<DBQueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType>
+    where DBQueryType             : Query<DBQueryType>
 {
     private Dictionary<long, DBConnectorType> _connectorStack = new Dictionary<long, DBConnectorType>();
 
@@ -28,6 +31,12 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     #region Automatic connection management settings
     public bool     AutomaticConnectionRenewal         { get; private set; } = true;
     public TimeSpan AutomaticConnectionRenewalInterval { get; private set; } = TimeSpan.FromSeconds(900);
+	#endregion
+
+	#region Query control callbacks
+	public Action<Exception> OnQueryExceptionAction {
+		get; private set;
+	}
 	#endregion
 
 	/// <summary>
@@ -51,7 +60,54 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
         this.ConnectionString = connectionString;
     }
 
-    public DBConnectorManagerType Configure(Action<DBConnectorSettingsType> action) {
+
+	/// <summary>
+	/// Creates a query builder instance using the current connection manager's attached instance.
+	/// The resulting builder can execute queries against the current database connection.
+	/// </summary>
+	/// <returns>A new QueryBuilder instance bound to the current connection</returns>
+	public DBQueryBuilderType QueryBuilder() {
+        return ((DBQueryBuilderType) Activator.CreateInstance(typeof(DBQueryBuilderType), new object[] { this.GetInstance() }))
+            .WithOnQueryExceptionAction(this.OnQueryExceptionAction)
+        ;
+	}
+
+	/// <summary>
+	/// Creates a query builder instance using a detached connection instance.
+	/// This allows queries to be built independently of the current connection context,
+	/// useful for scenarios requiring isolated query execution.
+	/// </summary>
+	/// <returns>A new QueryBuilder instance bound to a detached connection</returns>
+	public DBQueryBuilderType DetachedQueryBuilder() {
+		return ((DBQueryBuilderType) Activator.CreateInstance(typeof(DBQueryBuilderType), new object[] { this.GetDetachedInstance() }))
+			.WithOnQueryExceptionAction(this.OnQueryExceptionAction)
+		;
+	}
+
+	/// <summary>
+	/// Creates a query builder instance using the current connection manager's attached instance
+	/// and a pre-defined query object.
+	/// </summary>
+	/// <param name="query">The query object to initialize with</param>
+	/// <returns>A new QueryBuilder instance bound to the current connection and initialized with the query</returns>
+	public DBQueryBuilderType QueryBuilder(DBQueryType query) {
+		return ((DBQueryBuilderType)Activator.CreateInstance(typeof(DBQueryBuilderType), new object[] { this.GetInstance(), query }))
+			.WithOnQueryExceptionAction(this.OnQueryExceptionAction)
+		;
+	}
+
+	/// <summary>
+	/// Creates a query builder instance using a detached connection instance and a pre-defined query object.
+	/// </summary>
+	/// <param name="query">The query object to initialize with</param>
+	/// <returns>A new QueryBuilder instance bound to a detached connection and initialized with the query</returns>
+	public DBQueryBuilderType DetachedQueryBuilder(DBQueryType query) {
+		return ((DBQueryBuilderType)Activator.CreateInstance(typeof(DBQueryBuilderType), new object[] { this.GetDetachedInstance(), query }))
+			.WithOnQueryExceptionAction(this.OnQueryExceptionAction)
+		;
+	}
+
+	public DBConnectorManagerType Configure(Action<DBConnectorSettingsType> action) {
         this.ConnectionStringBuilder = (DBConnectorSettingsType) Activator.CreateInstance<DBConnectorSettingsType>();
 
         action.Invoke(this.ConnectionStringBuilder);
@@ -71,15 +127,21 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
 
         return (DBConnectorManagerType) this;
     }
-    #endregion
 
-    #region DB Connection handler
-    /// <summary>
-    /// Generate a detacched and not-managed instance of the DBType DB Connector,
-    /// mostly intended to be used as a single-use connection
-    /// </summary>
-    /// <returns>A brand-new DBType instance, initialized and ready to run queries</returns>
-    public DBConnectorType GetDetachedInstance() {
+	public DBConnectorManagerType WithOnQueryExceptionAction(Action<Exception> onQueryExceptionAction) {
+		this.OnQueryExceptionAction = onQueryExceptionAction;
+
+		return (DBConnectorManagerType) this;
+	}
+	#endregion
+
+	#region DB Connection handler
+	/// <summary>
+	/// Generate a detacched and not-managed instance of the DBType DB Connector,
+	/// mostly intended to be used as a single-use connection
+	/// </summary>
+	/// <returns>A brand-new DBType instance, initialized and ready to run queries</returns>
+	public DBConnectorType GetDetachedInstance() {
         DBConnectorType dBconnector = this.__GenerateDBTypeInstance();
         this.__Initialize(dBconnector);
 

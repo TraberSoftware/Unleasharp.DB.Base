@@ -29,6 +29,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public int             AffectedRows { get; protected set; } = 0;
     public int             TotalCount   { get; protected set; } = 0;
 
+    public Action<Exception> OnQueryExceptionAction { get; private set; }
+
     public QueryBuilder(DBConnectorType connector) {
         this.Connector = connector;
 
@@ -41,7 +43,19 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 			this.DBQuery = query;
     }
 
-    public QueryBuilderType Build(Action<DBQueryType> action) {
+    public QueryBuilderType WithOnQueryExceptionAction(Action<Exception> onQueryExceptionAction) {
+        this.OnQueryExceptionAction = onQueryExceptionAction;
+
+		return (QueryBuilderType)this;
+	}
+
+    protected void _OnQueryException(Exception ex) {
+        if (this.OnQueryExceptionAction != null) {
+            this.OnQueryExceptionAction.Invoke(ex);
+        }
+    }
+
+	public QueryBuilderType Build(Action<DBQueryType> action) {
         action.Invoke(this.DBQuery);
 
         return (QueryBuilderType) this;
@@ -138,8 +152,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             this.DBQuery = cachedQuery;
 
             IEnumerable<DataRow> resultEnumerator = this.AsEnumerable();
-            if (!resultEnumerator.Any()) {
+            if (resultEnumerator == null || !resultEnumerator.Any()) {
                 endFound = true;
+                break;
             }
 
             foreach (DataRow row in resultEnumerator) {
@@ -156,6 +171,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
                 }
                 catch (Exception ex) {
                     endFound = true;
+                    break;
                 }
 
                 yield return row;
@@ -200,13 +216,13 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual List<T> ToList<T>() where T : class{
         this.Execute();
 
-        return this.Result.AsEnumerable().Select(row => row.GetObject<T>()).ToList();
+        return this.Result?.AsEnumerable().Select(row => row.GetObject<T>()).ToList();
     }
 
     public virtual async Task<List<T>> ToListAsync<T>() where T : class{
         await this.ExecuteAsync();
 
-        return this.Result.AsEnumerable().Select(row => row.GetObject<T>()).ToList();
+        return this.Result?.AsEnumerable().Select(row => row.GetObject<T>()).ToList();
     }
 
     public virtual DataRow FirstOrDefault() {
