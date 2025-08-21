@@ -111,14 +111,14 @@ Query.Insert()
 
 ### Simple Class Mapping (1:1)
 ```csharp
-public class ExampleTable {
-    public ulong? Id { get; set; }
-    public string MediumText { get; set; }
-    public string LongText { get; set; }
-    public string Json { get; set; }
-    public byte[] LongBlob { get; set; }
-    public EnumExample? EnumValue { get; set; }
-    public string Varchar { get; set; }
+public class example_table {
+    public ulong?       id          { get; set; }
+    public string       _mediumtext { get; set; }
+    public string       _longtext   { get; set; }
+    public string       _json       { get; set; }
+    public byte[]       _longblob   { get; set; }
+    public EnumExample? _enum       { get; set; }
+    public string       _varchar    { get; set; }
 }
 ```
 
@@ -128,28 +128,29 @@ using System.ComponentModel;
 using Unleasharp.DB.Base.SchemaDefinition;
 
 [Table("example_table")]
-[Key("id", Field = "id", KeyType = Unleasharp.DB.Base.QueryBuilding.KeyType.PRIMARY)]
+[PrimaryKey("id")]
+[UniqueKey("id", "id", "_enum")]
 public class ExampleTable {
-    [Column("id", "bigint", Unsigned = true, PrimaryKey = true, AutoIncrement = true, NotNull = true, Length = 20)]
-    public ulong? Id { get; set; }
-    
-    [Column("_mediumtext", "mediumtext")]
-    public string MediumText { get; set; }
-    
-    [Column("_longtext", "longtext")]
-    public string LongText { get; set; }
-    
-    [Column("_json", "longtext")]
-    public string Json { get; set; }
-    
-    [Column("_enum", "enum")]
-    public EnumExample? EnumValue { get; set; }
-    
-    [Column("_varchar", "varchar", Length = 255)]
-    public string Varchar { get; set; }
-    
-    [Column("_longblob", "longblob")]
+    [Column("id", ColumnDataType.UInt64, Unsigned = true, PrimaryKey = true, AutoIncrement = true, NotNull = true)]
+    public ulong? Id              { get; set; }
+
+    [Column("_mediumtext", ColumnDataType.Text)]
+    public string MediumText      { get; set; }
+
+    [Column("_longtext", ColumnDataType.Text)]
+    public string Longtext        { get; set; }
+
+    [Column("_json", ColumnDataType.Json)]
+    public string Json            { get; set; }
+
+    [Column("_longblob", ColumnDataType.Binary)]
     public byte[] CustomFieldName { get; set; }
+
+    [Column("_enum", ColumnDataType.Enum)]
+    public EnumExample? Enum      { get; set; }
+
+    [Column("_varchar", "varchar", Length = 255)]
+    public string Varchar         { get; set; }
 }
 ```
 
@@ -183,7 +184,7 @@ The `[Description]` attribute maps the C# enum value to its database representat
 ## 🚀 Database Engine Implementations
 
 - ✅ **MySQL** - [Unleasharp.DB.MySQL](https://github.com/TraberSoftware/Unleasharp.DB.MySQL)
-- 🚧 **SQLite** - Work in Progress
+- 🚧 **SQLite** - [Unleasharp.DB.SQLite](https://github.com/TraberSoftware/Unleasharp.DB.SQLite)
 - 🚧 **PostgreSQL** - Work in Progress
 - 🚧 **MSSQL** - Work in Progress
 
