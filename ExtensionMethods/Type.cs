@@ -23,7 +23,7 @@ public static class TypeExtensions {
             Type t when t == typeof(TimeSpan)  => ColumnDataType.Time,
             Type t when t == typeof(Guid)      => ColumnDataType.Guid,
             Type t when t == typeof(byte[])    => ColumnDataType.Binary,
-            //Type t when t == typeof(object)    => ColumnType.Text,
+            Type t when t.IsEnum               => ColumnDataType.Enum,
 
             _ => throw new NotSupportedException(
                      $"No DbColumnType mapping defined for CLR type {underlyingType.FullName}")
@@ -35,8 +35,8 @@ public static class TypeExtensions {
         Type underlyingType = Nullable.GetUnderlyingType(type) ?? type;
 
         return underlyingType switch {
-			Type t when t == typeof(short)     => true,
-			Type t when t == typeof(int)       => true,
+            Type t when t == typeof(short)     => true,
+            Type t when t == typeof(int)       => true,
             Type t when t == typeof(long)      => true,
             Type t when t == typeof(ushort)    => false,
             Type t when t == typeof(uint)      => false,

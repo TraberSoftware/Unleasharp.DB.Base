@@ -28,15 +28,26 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     #region Automatic connection management settings
     public bool     AutomaticConnectionRenewal         { get; private set; } = true;
     public TimeSpan AutomaticConnectionRenewalInterval { get; private set; } = TimeSpan.FromSeconds(900);
-    #endregion
+	#endregion
 
-    public ConnectorManager() { }
+	/// <summary>
+	/// Initializes a new instance of ConnectorManager with default connection settings.
+	/// </summary>
+	public ConnectorManager() { }
 
-    public ConnectorManager(DBConnectorSettingsType connectionStringBuilder) {
+	/// <summary>
+	/// Initializes a new instance of ConnectorManager with a custom connection string builder.
+	/// </summary>
+	/// <param name="stringBuilder">The connection string builder containing configuration details</param>
+	public ConnectorManager(DBConnectorSettingsType connectionStringBuilder) {
         this.ConnectionStringBuilder = connectionStringBuilder;
     }
 
-    public ConnectorManager(string connectionString) {
+	/// <summary>
+	/// Initializes a new instance of ConnectorManager with a raw connection string.
+	/// </summary>
+	/// <param name="connectionString">The full MySQL connection string</param>
+	public ConnectorManager(string connectionString) {
         this.ConnectionString = connectionString;
     }
 

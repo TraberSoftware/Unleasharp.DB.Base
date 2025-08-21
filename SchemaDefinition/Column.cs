@@ -30,59 +30,6 @@ public class Column : NamedStructure {
     }
 }
 
-// ----- Indexes -----
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class Index : NamedStructure {
-    public string[] Columns { get; }
-    public string   Type    { get; set; } = "BTREE";
-
-    public Index(string name, params string[] columns) : base(name) {
-        Columns = columns;
-    }
-}
-
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class UniqueKey : NamedStructure {
-    public string[] Columns { get; }
-
-    public UniqueKey(string name, params string[] columns) : base(name) {
-        Columns = columns;
-    }
-}
-
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-public class ForeignKey : NamedStructure {
-    public string[] Columns           { get; private set; }
-    public string   ReferencedTable   { get; private set; }
-    public string[] ReferencedColumns { get; private set; }
-    public string   OnDelete          { get; set; } = "NO ACTION";
-    public string   OnUpdate          { get; set; } = "NO ACTION";
-
-	public string Column {
-        get {
-            return Columns.FirstOrDefault();
-        }
-		set {
-            Columns = new string[] { value };
-		}
-	}
-
-	public string ReferencedColumn {
-        get {
-            return ReferencedColumns.FirstOrDefault();
-        }
-		set {
-			ReferencedColumns = new string[] { value };
-		}
-	}
-
-	public ForeignKey(string name, string column, string referencedTable, string referencedColumn) : base(name) {
-        Column           = column;
-        ReferencedTable  = referencedTable;
-        ReferencedColumn = referencedColumn;
-    }
-}
-
 public enum ColumnDataType {
 	Boolean,
 	Int,
@@ -99,6 +46,7 @@ public enum ColumnDataType {
 	Text,
 	Char,
 	Varchar,
+	Enum,
 	Date,
 	DateTime,
 	Time,

@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using Unleasharp.DB.Base.SchemaDefinition;
 using Unleasharp.ExtensionMethods;
 
@@ -15,134 +10,96 @@ public static class DataRowExtension {
     public static T GetObject<T>(this DataRow row) where T : class {
         T serialized = Activator.CreateInstance<T>();
 
-        #region Field serialization
         foreach (FieldInfo field in typeof(T).GetFields()) {
-            string     dbFieldName = field.Name;
-            string  classFieldName = field.Name;
-            Type    fieldType      = field.FieldType;
-
-            if (Nullable.GetUnderlyingType(fieldType) != null) {
-                fieldType = Nullable.GetUnderlyingType(fieldType);
-            }
-
-            foreach (Attribute fieldAttribute in field.GetCustomAttributes()) {
-                if (
-                    fieldAttribute.GetType().BaseType == typeof(NamedStructure)
-                    ||
-                    fieldAttribute.GetType()          == typeof(NamedStructure)
-                ) { 
-                    dbFieldName = ((NamedStructure) fieldAttribute).Name;
-                }
-            }
-
-            MethodInfo dataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
-            MethodInfo dataRowFieldGenericMethod = dataRowFieldMethod.MakeGenericMethod(fieldType);
-
-            //.Invoke(Row.GetType(), new object[] { Row, FieldType, DBFieldName });
-
-            if (fieldType.IsEnum) {
-                string enumValueString = row.Field<string>(dbFieldName);
-
-                if (enumValueString == null) {
-                    field.SetValue(
-                        serialized,
-                        null
-                    );
-
-                    continue;
-                }
-
-                bool valueFound = false;
-                foreach (Enum enumValue in Enum.GetValues(fieldType)) {
-                    string enumDescription = enumValue.GetDescription();
-                    if (
-                        enumDescription == enumValueString
-                    ) {
-                        field.SetValue(
-                            serialized,
-                            enumValue
-                        );
-                        valueFound = true;
-
-                        break;
-                    }
-                }
-
-                if (valueFound) {
-                    continue;
-                }
-            }
-
-            field.SetValue(
-                serialized,
-                dataRowFieldGenericMethod.Invoke(null, new object[] { row, dbFieldName })
-            );
+			__HandleRowMemberInfo<T>(row, field, serialized);
         }
-        #endregion
-
-        #region Property Serialization
         foreach (PropertyInfo property in typeof(T).GetProperties()) {
-            string     dbFieldName = property.Name;
-            string  classFieldName = property.Name;
-            Type    propertyType   = property.PropertyType;
+			__HandleRowMemberInfo<T>(row, property, serialized);
+		}
 
-            if (Nullable.GetUnderlyingType(propertyType) != null) {
-                propertyType = Nullable.GetUnderlyingType(propertyType);
-            }
+		return serialized;
+    }
 
-            foreach (Attribute propertyAttribute in property.GetCustomAttributes()) {
-                if (
-                    propertyAttribute.GetType().BaseType == typeof(NamedStructure)
-                    ||
-                    propertyAttribute.GetType() == typeof(NamedStructure)
-                ) {
-                    dbFieldName = ((NamedStructure)propertyAttribute).Name;
-                }
-            }
+	#region Helpers
+	private static Type __GetMemberInfoDataType(MemberInfo memberInfo) {
+        return true switch {
+            true when  memberInfo == null          => null,
+            true when (memberInfo is FieldInfo)    => ((FieldInfo)    memberInfo).FieldType,
+            true when (memberInfo is PropertyInfo) => ((PropertyInfo) memberInfo).PropertyType,
 
-            MethodInfo dataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
-            MethodInfo dataRowFieldGenericMethod = dataRowFieldMethod.MakeGenericMethod(propertyType);
+            // If anything else than a FieldInfo or PropertyInfo, return null
+            _ => null
+        };
+    }
 
-            if (propertyType.IsEnum) {
-                string enumValueString = row.Field<string>(dbFieldName);
+    private static void __HandleRowMemberInfo<T>(DataRow row, MemberInfo memberInfo, T serialized) {
+		string  dbFieldName    = memberInfo.Name;
+        string  classFieldName = memberInfo.Name;
+        Type    memberInfoType = __GetMemberInfoDataType(memberInfo);
+        object  value          = null;
 
-                if (enumValueString == null) {
-                    property.SetValue(
-                        serialized,
-                        null
-                    );
+        // Not a Field nor a Property
+        // Shouldn't handle
+        if (memberInfoType == null) {
+            return;
+        }
 
-                    continue;
-                }
+        if (Nullable.GetUnderlyingType(memberInfoType) != null) {
+            memberInfoType = Nullable.GetUnderlyingType(memberInfoType);
+        }
 
-                bool valueFound = false;
-                foreach (Enum enumValue in Enum.GetValues(propertyType)) {
+        Attribute propertyAttribute = memberInfo.GetCustomAttribute<NamedStructure>();
+        if (propertyAttribute != null) {
+			dbFieldName = ((NamedStructure)propertyAttribute).Name;
+		}
+
+        MethodInfo dataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
+        MethodInfo dataRowFieldGenericMethod = dataRowFieldMethod.MakeGenericMethod(memberInfoType);
+
+        if (memberInfoType.IsEnum) {
+            string enumValueString = row.Field<string>(dbFieldName);
+
+            if (enumValueString != null) {
+                foreach (Enum enumValue in Enum.GetValues(memberInfoType)) {
                     string enumDescription = enumValue.GetDescription();
                     if (
                         enumDescription == enumValueString
                     ) {
-                        property.SetValue(
-                            serialized,
-                            enumValue
-                        );
-                        valueFound = true;
-
+                        value = enumValue;
                         break;
                     }
                 }
-
-                if (valueFound) {
-                    continue;
-                }
             }
-
-            property.SetValue(
-                serialized,
-                dataRowFieldGenericMethod.Invoke(null, new object[] { row, dbFieldName })
-            );
         }
-        #endregion
+        else {
+            try {
+				value = dataRowFieldGenericMethod.Invoke(null, new object[] { row, dbFieldName });
+			}
+            // Row.Field<T> is a strongly-typed function, it types do not match 100% it will fail
+            // As types can differ between database engines, we try to convert the data types
+            catch (Exception ex) {
+                try {
+					value = Convert.ChangeType(row[dbFieldName], memberInfoType);
+				}
+                catch (Exception cex) {
+					// We tried, but
+					throw cex;
+                }
+			}
+		}
 
-        return serialized;
-    }
+        if (memberInfo is FieldInfo) {
+			((FieldInfo) memberInfo).SetValue(
+				serialized,
+				value
+			);
+		}
+		if (memberInfo is PropertyInfo) {
+			((PropertyInfo) memberInfo).SetValue(
+				serialized,
+				value
+			);
+		}
+	}
+	#endregion
 }

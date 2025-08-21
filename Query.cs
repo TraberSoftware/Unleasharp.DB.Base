@@ -38,12 +38,10 @@ public class Query<DBQueryType> : Renderable
     public List<string>                      QueryColumns { get; protected set; } = new List<string>                     ();
     public FieldSelector                     QueryInto    { get; protected set; }
     public Type                              QueryCreate  { get; protected set; }
-    public List<GroupBy> QueryGroup   { get; protected set; } = new List<GroupBy>();
-    public List<OrderBy> QueryOrder   { get; protected set; } = new List<OrderBy>();
-    public Limit         QueryLimit   { get; protected set; }
-
-
-    public QueryType     QueryType    { get; protected set; } = QueryType.RAW;
+    public List<GroupBy>                     QueryGroup   { get; protected set; } = new List<GroupBy>();
+    public List<OrderBy>                     QueryOrder   { get; protected set; } = new List<OrderBy>();
+    public Limit                             QueryLimit   { get; protected set; }
+    public QueryType                         QueryType    { get; protected set; } = QueryType.RAW;
 
     /// <summary>
     /// Raw query string rendered as reference but not for real usage
@@ -51,7 +49,7 @@ public class Query<DBQueryType> : Renderable
     /// as reference as the translated query that will be executed, but could
     /// be different of the real result.
     /// </summary>
-    public string                            QueryRendered       { get; protected set; }
+    public string                            QueryRenderedString { get; protected set; }
     /// <summary>
     /// Pre-rendered data values for query rendering
     /// </summary>
@@ -117,7 +115,7 @@ public class Query<DBQueryType> : Renderable
     }
 
     public virtual DBQueryType ResetPreparedData() {
-        this.QueryRendered       = null;
+        this.QueryRenderedString = null;
         this.QueryPreparedString = null;
         this.QueryRenderedData   = new Dictionary<string, string>();
         this.QueryPreparedData   = new Dictionary<string, PreparedValue>();
@@ -126,29 +124,43 @@ public class Query<DBQueryType> : Renderable
     }
     #endregion
 
-    #region Query rendering
-    public virtual string RenderPrepared(bool force = true) {
-        this._RenderPrepared(force);
+    #region Control parameters
+    public bool HasChanged { get; private set; } = false;
 
-        return this.QueryRendered;
+	public void Touch() {
+		this.HasChanged = true;
+	}
+
+	public void Untouch() {
+		this.HasChanged = false;
+	}
+	#endregion
+
+	#region Query rendering
+	public virtual string RenderPrepared() {
+        this._RenderPrepared();
+        this.HasChanged = false;
+
+        return this.QueryRenderedString;
     }
 
-    public virtual void _RenderPrepared(bool force = true) {
+    public virtual void _RenderPrepared() {
         throw new NotImplementedException();
     }
 
-    public virtual string Render(bool force = true) {
-        this._Render(force);
+    public virtual string Render() {
+        this._Render();
+		this.HasChanged = false;
 
-        return this.QueryPreparedString;
+		return this.QueryPreparedString;
     }
 
-    public virtual void _Render(bool force = true) {
-        if (force) {
+    public virtual void _Render() {
+        if (this.HasChanged) {
             this.ResetPreparedData();
         }
 
-        if (string.IsNullOrWhiteSpace(this.QueryPreparedString) || force) {
+        if (string.IsNullOrWhiteSpace(this.QueryPreparedString) || this.HasChanged) {
             switch (this.QueryType) {
                 case QueryType.COUNT:
                     this._RenderCountQuery();
@@ -166,13 +178,15 @@ public class Query<DBQueryType> : Renderable
                     this._RenderDeleteQuery();
                     break;
                 case QueryType.CREATE:
+                case QueryType.CREATE_TABLE:
                     this._RenderCreateQuery();
                     break;
                 case QueryType.RAW:
                     break;
             }
         }
-    }
+	}
+
     protected virtual void _RenderCountQuery() {
         List<string> queryGroups = new List<string> {
             _RenderCountSentence      (),
@@ -286,7 +300,8 @@ public class Query<DBQueryType> : Renderable
 
         this.QuerySelect.Add(select);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType Select(FieldSelector field) {
@@ -321,7 +336,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Set(Where<DBQueryType> setValue) {
         this.QuerySet.Add(setValue);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType Set(string fieldName, dynamic value, bool escape = true) {
@@ -340,7 +356,8 @@ public class Query<DBQueryType> : Renderable
         }
         this.QueryValues.Add(row);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType Value<T>(T row, bool skipNullValues = true) where T : class {
@@ -372,7 +389,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType From(From<DBQueryType> fromSentence) {
         this.QueryFrom.Add(fromSentence);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType From<TableClass>() {
@@ -382,7 +400,7 @@ public class Query<DBQueryType> : Renderable
             tableName = tableAttribute.Name;
         }
 
-        this.QueryFrom.Add(new From<DBQueryType> {
+        this.From(new From<DBQueryType> {
             Table       = tableName,
             EscapeTable = true,
         });
@@ -414,7 +432,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Join(Join<DBQueryType> sentence) {
         this.QueryJoin.Add(sentence);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType Join(string tableName, Where<DBQueryType> condition, JoinDirection direction = JoinDirection.NONE) {
@@ -473,7 +492,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Where(Where<DBQueryType> whereSentence) {
         this.QueryWhere.Add(whereSentence);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType Where(string fieldName, dynamic fieldValue) {
@@ -495,7 +515,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType WhereIn(WhereIn<DBQueryType> whereInSentence) {
         this.QueryWhereIn.Add(whereInSentence);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType WhereIn(string fieldName, List<dynamic> fieldValues) {
@@ -546,7 +567,8 @@ public class Query<DBQueryType> : Renderable
 	public virtual DBQueryType GroupBy(GroupBy group) {
         this.QueryGroup.Add(group);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
     public virtual DBQueryType GroupBy(FieldSelector field) {
         return this.GroupBy(new GroupBy {
@@ -563,7 +585,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType OrderBy(OrderBy orderSentence) {
         this.QueryOrder.Add(orderSentence);
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType OrderBy(string fieldName, OrderDirection direction = OrderDirection.ASC, bool escapeField = true) {
@@ -581,7 +604,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Limit(Limit limitSentence) {
         this.QueryLimit = limitSentence;
 
-        return (DBQueryType) this;
+		this.Touch();
+		return (DBQueryType) this;
     }
 
     public virtual DBQueryType Limit(long count, long offset = 0) {
@@ -593,22 +617,59 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Query building - Create
-    public DBQueryType Create(Type tableType) {
+    public DBQueryType CreateTable(Type tableType) {
         this.SetQueryType(QueryType.CREATE);
 
         this.QueryCreate = tableType;
 
-        return (DBQueryType)this;
+		this.Touch();
+		return (DBQueryType)this;
     }
 
-    public DBQueryType Create<T>() {
-        return this.Create(typeof(T));
+    public DBQueryType CreateTable<T>() where T : class {
+        return this.CreateTable(typeof(T));
     }
-    #endregion
-    #endregion
 
-    #region Query sentence rendering virtual methods
-    protected virtual string _RenderCountSentence()        { throw new NotImplementedException(); }
+    public DBQueryType Create<T>() where T : class {
+        return this.CreateTable<T>();
+    }
+	#endregion
+
+	#region Query building - Raw
+    public DBQueryType Raw(string query, string queryPreparedString) {
+        this.SetQueryType(QueryType.RAW);
+
+        this.QueryRenderedString = query;
+        this.QueryPreparedString = queryPreparedString;
+
+		this.Untouch();
+		return (DBQueryType)this;
+    }
+    public DBQueryType Raw(string query) {
+        return this.Raw(query, query);
+    }
+
+    public DBQueryType Raw(string query, Dictionary<string, PreparedValue> queryPreparedData) {
+        this.SetQueryType(QueryType.RAW);
+
+		this.QueryPreparedData = queryPreparedData;
+
+		return this.Raw(query);
+    }
+
+    public DBQueryType Raw(string query, Dictionary<string, dynamic> queryPreparedData) {
+        this.SetQueryType(QueryType.RAW);
+
+        return this.Raw(query, queryPreparedData.ToDictionary(
+            dataItem => dataItem.Key, 
+            dataItem => new PreparedValue { Value = dataItem.Value, EscapeValue = true }
+        ));
+    }
+	#endregion
+	#endregion
+
+	#region Query sentence rendering virtual methods
+	protected virtual string _RenderCountSentence()        { throw new NotImplementedException(); }
     protected virtual string _RenderSelectSentence()       { throw new NotImplementedException(); }
     protected virtual string _RenderFromSentence()         { throw new NotImplementedException(); }
     protected virtual string _RenderJoinSentence()         { throw new NotImplementedException(); }
