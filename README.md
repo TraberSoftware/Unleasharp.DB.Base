@@ -185,7 +185,7 @@ The `[Description]` attribute maps the C# enum value to its database representat
 
 - ✅ **MySQL** - [Unleasharp.DB.MySQL](https://github.com/TraberSoftware/Unleasharp.DB.MySQL)
 - ✅ **SQLite** - [Unleasharp.DB.SQLite](https://github.com/TraberSoftware/Unleasharp.DB.SQLite)
-- 🚧 **PostgreSQL** - Work in Progress
+- ✅ **PostgreSQL** - [Unleasharp.DB.PostgreSQL](https://github.com/TraberSoftware/Unleasharp.DB.PostgreSQL)
 - 🚧 **MSSQL** - Work in Progress
 
 ## 📦 Dependencies
