@@ -16,11 +16,16 @@
     <Description>A multi-purpose database query building library. Generic abstractions.</Description>
 
     <PackageProjectUrl>https://github.com/TraberSoftware/Unleasharp.DB.Base</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   
   <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath=""/>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Unleasharp" Version="1.0.1" />
+    <PackageReference Include="Unleasharp" Version="1.0.2" />
   </ItemGroup>
 
   <ItemGroup>
