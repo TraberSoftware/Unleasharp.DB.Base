@@ -11,17 +11,17 @@ public static class DataRowExtension {
         T serialized = Activator.CreateInstance<T>();
 
         foreach (FieldInfo field in typeof(T).GetFields()) {
-			__HandleRowMemberInfo<T>(row, field, serialized);
+            __HandleRowMemberInfo<T>(row, field, serialized);
         }
         foreach (PropertyInfo property in typeof(T).GetProperties()) {
-			__HandleRowMemberInfo<T>(row, property, serialized);
-		}
+            __HandleRowMemberInfo<T>(row, property, serialized);
+        }
 
-		return serialized;
+        return serialized;
     }
 
-	#region Helpers
-	private static Type __GetMemberInfoDataType(MemberInfo memberInfo) {
+    #region Helpers
+    public static Type GetDataType(this MemberInfo memberInfo) {
         return true switch {
             true when  memberInfo == null          => null,
             true when (memberInfo is FieldInfo)    => ((FieldInfo)    memberInfo).FieldType,
@@ -33,11 +33,11 @@ public static class DataRowExtension {
     }
 
     private static void __HandleRowMemberInfo<T>(DataRow row, MemberInfo memberInfo, T serialized) {
-		string  dbFieldName    = memberInfo.Name;
+        string  dbFieldName    = memberInfo.Name;
         string  classFieldName = memberInfo.Name;
-        Type    memberInfoType = __GetMemberInfoDataType(memberInfo);
+        Type    memberInfoType = memberInfo.GetDataType();
         object  value          = null;
-
+        
         // Not a Field nor a Property
         // Shouldn't handle
         if (memberInfoType == null) {
@@ -50,56 +50,64 @@ public static class DataRowExtension {
 
         Attribute propertyAttribute = memberInfo.GetCustomAttribute<NamedStructure>();
         if (propertyAttribute != null) {
-			dbFieldName = ((NamedStructure)propertyAttribute).Name;
-		}
+            dbFieldName = ((NamedStructure)propertyAttribute).Name;
+        }
 
         MethodInfo dataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
         MethodInfo dataRowFieldGenericMethod = dataRowFieldMethod.MakeGenericMethod(memberInfoType);
 
         if (memberInfoType.IsEnum) {
-            string enumValueString = row.Field<string>(dbFieldName);
+            try {
+                string enumValueString = row.Field<string>(dbFieldName);
 
-            if (enumValueString != null) {
-                foreach (Enum enumValue in Enum.GetValues(memberInfoType)) {
-                    string enumDescription = enumValue.GetDescription();
-                    if (
-                        enumDescription == enumValueString
-                    ) {
-                        value = enumValue;
-                        break;
+                if (enumValueString != null) {
+                    foreach (Enum enumValue in Enum.GetValues(memberInfoType)) {
+                        string enumDescription = enumValue.GetDescription();
+                        if (
+                            enumDescription == enumValueString
+                        ) {
+                            value = enumValue;
+                            break;
+                        }
                     }
                 }
+            }
+            catch(InvalidCastException ex) {
+                // When value of enum comes from an integer, we can't retrieve the string value
+                // we should try to cast to enum by using the integer value
+                // If this fails, I don't know what could we do
+                value = Enum.ToObject(memberInfoType, row.Field<int>(dbFieldName));
             }
         }
         else {
             try {
-				value = dataRowFieldGenericMethod.Invoke(null, new object[] { row, dbFieldName });
-			}
+                value = dataRowFieldGenericMethod.Invoke(null, new object[] { row, dbFieldName });
+            }
             // Row.Field<T> is a strongly-typed function, it types do not match 100% it will fail
             // As types can differ between database engines, we try to convert the data types
             catch (Exception ex) {
                 try {
-					value = Convert.ChangeType(row[dbFieldName], memberInfoType);
-				}
-                catch (Exception cex) {
-					// We tried, but
-					throw cex;
+                    value = Convert.ChangeType(row[dbFieldName], memberInfoType);
                 }
-			}
-		}
+                catch (Exception cex) {
+                    // We tried, but
+                    throw cex;
+                }
+            }
+        }
 
         if (memberInfo is FieldInfo) {
-			((FieldInfo) memberInfo).SetValue(
-				serialized,
-				value
-			);
-		}
-		if (memberInfo is PropertyInfo) {
-			((PropertyInfo) memberInfo).SetValue(
-				serialized,
-				value
-			);
-		}
-	}
-	#endregion
+            ((FieldInfo) memberInfo).SetValue(
+                serialized,
+                value
+            );
+        }
+        if (memberInfo is PropertyInfo) {
+            ((PropertyInfo) memberInfo).SetValue(
+                serialized,
+                value
+            );
+        }
+    }
+    #endregion
 }

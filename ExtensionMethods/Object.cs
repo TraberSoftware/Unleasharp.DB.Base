@@ -14,42 +14,40 @@ public static class Object {
 
         Type rowType = row.GetType();
 
-        #region Field serialization
         foreach (FieldInfo field in rowType.GetFields()) {
-            string dbFieldName = field.Name;
-
-            foreach (Attribute fieldAttribute in field.GetCustomAttributes()) {
-                if (
-                    fieldAttribute.GetType().BaseType == typeof(NamedStructure)
-                    ||
-                    fieldAttribute.GetType()          == typeof(NamedStructure)
-                ) {
-                    dbFieldName = ((NamedStructure)fieldAttribute).Name;
-                }
-            }
-
-            result.Add(dbFieldName, field.GetValue(row));
+            __HandleObjectMemberInfo(row, field, result);
         }
-        #endregion
 
-        #region Property Serialization
         foreach (PropertyInfo property in rowType.GetProperties()) {
-            string dbFieldName = property.Name;
-
-            foreach (Attribute propertyAttribute in property.GetCustomAttributes()) {
-                if (
-                    propertyAttribute.GetType().BaseType == typeof(NamedStructure)
-                    ||
-                    propertyAttribute.GetType()          == typeof(NamedStructure)
-                ) {
-                    dbFieldName = ((NamedStructure)propertyAttribute).Name;
-                }
-            }
-
-            result.Add(dbFieldName, property.GetValue(row));
+            __HandleObjectMemberInfo(row, property, result);
         }
-        #endregion
 
         return result;
+    }
+
+    private static void __HandleObjectMemberInfo(object row, MemberInfo memberInfo, Dictionary<string, dynamic> result) {
+        string         dbColumnName = memberInfo.Name;
+        NamedStructure attribute    = memberInfo.GetCustomAttribute<NamedStructure>();
+        Column         column       = memberInfo.GetCustomAttribute<Column>();
+        object?        value        = null;
+
+        if (attribute != null) {
+            dbColumnName = attribute.Name;
+        }
+
+        if (memberInfo is FieldInfo) {
+            value = ((FieldInfo)   memberInfo).GetValue(row);
+        }
+        if (memberInfo is PropertyInfo) {
+            value = ((PropertyInfo)memberInfo).GetValue(row);
+        }
+
+        // Don't set null values to Primary Key columns
+        // HOWEVER, be careful when mixing null and not-null values of Primary Key columns in the same insert
+        if ((column != null && (column.PrimaryKey && column.NotNull)) && value == null) {
+            return;
+        }
+
+        result.Add(dbColumnName, value);
     }
 }

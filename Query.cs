@@ -81,10 +81,9 @@ public class Query<DBQueryType> : Renderable
         return (DBQueryType) this;
     }
 
-    public string PrepareQueryValue(dynamic queryValue, bool escape) {
-        string prefix      = "@prepared_query_value_";
+    public virtual string PrepareQueryValue(dynamic queryValue, bool escape) {
         Query<DBQueryType> targetQuery = this.ParentQuery != null ? this.ParentQuery : this;
-        string label       = $"{prefix}{targetQuery.QueryPreparedData.Count}";
+        string             label       = this.GetNextPreparedQueryValueLabel();
 
         targetQuery.QueryPreparedData.Add(label, new PreparedValue {
             Value       = queryValue,
@@ -93,6 +92,13 @@ public class Query<DBQueryType> : Renderable
 
         return label;
     }
+
+    public virtual string GetNextPreparedQueryValueLabel() {
+		Query<DBQueryType> targetQuery = this.ParentQuery != null ? this.ParentQuery : this;
+		string             prefix      = "@prepared_query_value_";
+
+		return $"{prefix}{targetQuery.QueryPreparedData.Count}"; ;
+	}
     #endregion
 
     public virtual DBQueryType Reset() {
@@ -369,8 +375,8 @@ public class Query<DBQueryType> : Renderable
     }
 
     public virtual DBQueryType Values<T>(List<T> rows, bool skipNullValues = true) where T : class {
-        foreach (object row in rows) {
-            this.Value(row, skipNullValues);
+        foreach (T row in rows) {
+            this.Value<T>(row, skipNullValues);
         }
 
         return (DBQueryType)this;

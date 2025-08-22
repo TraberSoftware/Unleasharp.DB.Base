@@ -19,6 +19,7 @@ public class Column : NamedStructure {
     public bool           Unique         { get; set; } = false;
     public bool           PrimaryKey     { get; set; } = false;
     public string?        Default        { get; set; }
+    public string?        Check          { get; set; }
     public string?        Comment        { get; set; }
 
     public Column(string name, ColumnDataType dataType) : base(name) {
