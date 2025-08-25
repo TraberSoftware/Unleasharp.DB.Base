@@ -32,6 +32,20 @@ public static class ExpressionHelper {
         return null;
     }
 
+    public static string ExtractClassFieldName<T>(Expression<Func<T, object>> columnExpression) {
+        if (columnExpression?.Body == null) {
+            return null;
+        }
+
+        var memberExpression = GetMemberExpression(columnExpression.Body);
+
+        if (memberExpression != null) {
+            return memberExpression.Member.Name;
+        }
+
+        return null;
+    }
+
     private static MemberExpression GetMemberExpression(Expression expression) {
         switch (expression) {
             case MemberExpression me:

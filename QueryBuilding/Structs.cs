@@ -29,9 +29,9 @@ public enum QueryType {
     [Description("CREATE")]
     CREATE,
     [Description("CREATE_TABLE")]
-	CREATE_TABLE,
+    CREATE_TABLE,
     [Description("CREATE_TYPE")]
-	CREATE_TYPE,
+    CREATE_TYPE,
 }
 
 public enum WhereComparer {

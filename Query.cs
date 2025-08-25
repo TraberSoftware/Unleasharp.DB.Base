@@ -856,4 +856,39 @@ public class Query<DBQueryType> : Renderable
     protected virtual string _RenderCreateSentence<T>() where T : Table { throw new NotImplementedException(); }
     protected virtual string _RenderCreateSentence(Type tableType)      { throw new NotImplementedException(); }
     #endregion
+
+    #region Helpers
+    public ColumnDataType? GetColumnDataType(string typeString) {
+        return typeString.ToLowerInvariant() switch {
+            "bool"      => ColumnDataType.Boolean,
+            "boolean"   => ColumnDataType.Boolean,
+            "int16"     => ColumnDataType.Int16,
+            "int"       => ColumnDataType.Int,
+            "int32"     => ColumnDataType.Int32,
+            "int64"     => ColumnDataType.Int64,
+            "uint16"    => ColumnDataType.UInt16,
+            "uint32"    => ColumnDataType.UInt32,
+            "uint"      => ColumnDataType.UInt,
+            "uint64"    => ColumnDataType.UInt64,
+            "decimal"   => ColumnDataType.Decimal,
+            "float"     => ColumnDataType.Float,
+            "double"    => ColumnDataType.Double,
+            "text"      => ColumnDataType.Text,
+            "char"      => ColumnDataType.Char,
+            "varchar"   => ColumnDataType.Varchar,
+            "enum"      => ColumnDataType.Enum,
+            "date"      => ColumnDataType.Date,
+            "datetime"  => ColumnDataType.DateTime,
+            "time"      => ColumnDataType.Time,
+            "timestamp" => ColumnDataType.Timestamp,
+            "binary"    => ColumnDataType.Binary,
+            "guid"      => ColumnDataType.Guid,
+            "uuid"      => ColumnDataType.Guid,
+            "json"      => ColumnDataType.Json,
+            "xml"       => ColumnDataType.Xml,
+
+            _ => null
+        };
+    }
+    #endregion
 }

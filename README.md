@@ -47,7 +47,11 @@ var connector = new ConnectorManager()
     .WithAutomaticConnectionRenewalInterval(TimeSpan.FromHours(1))
     .Configure(config => {
         config.ConnectionString = "Server=localhost;Database=unleasharp;Uid=unleasharp;Pwd=unleasharp;";
-    });
+    })
+    .WithOnQueryExceptionAction    ((query, ex) => Console.WriteLine($"Exception executing query:   {query.QueryRenderedString}\nException message:\n{ex.Message}"))
+    .WithBeforeQueryExecutionAction((query    ) => Console.WriteLine($"Preparing query for execute: {query.Render()}"))
+    .WithAfterQueryExecutionAction ((query    ) => Console.WriteLine($"Executed query:              {query.QueryRenderedString}"))
+;
 ```
 
 ### Engine-Specific Connection Builder
