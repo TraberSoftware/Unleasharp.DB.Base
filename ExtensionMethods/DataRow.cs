@@ -53,6 +53,11 @@ public static class DataRowExtension {
             dbFieldName = ((NamedStructure)propertyAttribute).Name;
         }
 
+        // If table does not contain the given field, it makes no sense to try to set it
+        if (!row.Table.Columns.Contains(dbFieldName)) {
+            return;
+        }
+
         MethodInfo dataRowFieldMethod        = typeof(DataRowExtensions).GetMethod("Field", new[] { typeof(DataRow), typeof(string) });
         MethodInfo dataRowFieldGenericMethod = dataRowFieldMethod.MakeGenericMethod(memberInfoType);
 
