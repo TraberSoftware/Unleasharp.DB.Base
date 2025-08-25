@@ -66,7 +66,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
     protected void _OnQueryException(Exception ex) {
         if (this.OnQueryExceptionAction != null) {
-            this.OnQueryExceptionAction.Invoke(ex);
+            this.OnQueryExceptionAction.Invoke(this.DBQuery, ex);
         }
     }
 
