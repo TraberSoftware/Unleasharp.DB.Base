@@ -1,8 +1,13 @@
 ﻿using System;
+using System.Reflection;
 using Unleasharp.DB.Base.SchemaDefinition;
 
 namespace Unleasharp.DB.Base.ExtensionMethods;
 public static class TypeExtensions {
+    public static string GetTableName(this Type type) {
+        return type.GetCustomAttribute<Table>()?.Name ?? type.Name;
+    }
+
     public static ColumnDataType GetColumnType(this Type type) {
         // unwrap Nullable<T>
         Type underlyingType = Nullable.GetUnderlyingType(type) ?? type;

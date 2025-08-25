@@ -28,26 +28,41 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public DataTable       Result       { get; protected set; } = null;
     public int             AffectedRows { get; protected set; } = 0;
     public int             TotalCount   { get; protected set; } = 0;
+    public object          ScalarValue  { get; protected set; } = null;
 
-    public Action<Exception> OnQueryExceptionAction { get; private set; }
+    public Action<DBQueryType> BeforeQueryExecutionAction { get; protected set; }
+    public Action<DBQueryType> AfterQueryExecutionAction  { get; protected set; }
+    public Action<Exception>   OnQueryExceptionAction     { get; private   set; }
 
     public QueryBuilder(DBConnectorType connector) {
         this.Connector = connector;
 
-			this.DBQuery = Activator.CreateInstance<DBQueryType>();
+            this.DBQuery = Activator.CreateInstance<DBQueryType>();
     }
 
     public QueryBuilder(DBConnectorType connector, DBQueryType query) {
         this.Connector = connector;
 
-			this.DBQuery = query;
+            this.DBQuery = query;
     }
 
     public QueryBuilderType WithOnQueryExceptionAction(Action<Exception> onQueryExceptionAction) {
         this.OnQueryExceptionAction = onQueryExceptionAction;
 
-		return (QueryBuilderType)this;
-	}
+        return (QueryBuilderType)this;
+    }
+
+    public QueryBuilderType WithBeforeQueryExecutionAction(Action<DBQueryType> beforeQueryExecutionAction) {
+        this.BeforeQueryExecutionAction = beforeQueryExecutionAction;
+
+        return (QueryBuilderType)this;
+    }
+
+    public QueryBuilderType WithAfterQueryExecutionAction(Action<DBQueryType> afterQueryExecutionAction) {
+        this.AfterQueryExecutionAction = afterQueryExecutionAction;
+
+        return (QueryBuilderType)this;
+    }
 
     protected void _OnQueryException(Exception ex) {
         if (this.OnQueryExceptionAction != null) {
@@ -55,7 +70,24 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         }
     }
 
-	public QueryBuilderType Build(Action<DBQueryType> action) {
+    protected void _BeforeQueryExecution() {
+        this._ResetResult();
+        if (this.BeforeQueryExecutionAction != null) {
+            this.BeforeQueryExecutionAction.Invoke(this.DBQuery);
+        }
+    }
+
+    protected void _AfterQueryExecution() {
+        if (this.Result != null && this.Result.Rows.Count > 0 && this.Result.Columns.Count > 0) {
+            this.ScalarValue = this.Result.Rows[0][0];
+        }
+
+        if (this.AfterQueryExecutionAction != null) {
+            this.AfterQueryExecutionAction.Invoke(this.DBQuery);
+        }
+    }
+
+    public QueryBuilderType Build(Action<DBQueryType> action) {
         action.Invoke(this.DBQuery);
 
         return (QueryBuilderType) this;
@@ -66,22 +98,41 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.Result       = null;
         this.AffectedRows = 0;
         this.TotalCount   = 0;
+        this.ScalarValue  = null;
     }
 
     #region Query execution aliases
     public virtual QueryBuilderType Execute(bool force = false) {
         // Don't execute the query twice
         if (this.Result == null || force) {
+            this._BeforeQueryExecution();
             this._Execute();
+            this._AfterQueryExecution();
         }
 
         return (QueryBuilderType) this;
     }
 
+    public virtual T ExecuteScalar<T>(bool force = false) {
+        // Don't execute the query twice
+        if (this.Result == null || force) {
+            this._BeforeQueryExecution();
+            T scalarValue = this._ExecuteScalar<T>();
+            this._AfterQueryExecution();
+
+            this.ScalarValue = scalarValue;
+            return scalarValue;
+        }
+
+        return default(T);
+    }
+
     public virtual async Task<QueryBuilderType> ExecuteAsync(bool force = false) {
         // Don't execute the query twice
         if (this.Result == null || force) {
+            this._BeforeQueryExecution();
             await this._ExecuteAsync();
+            this._AfterQueryExecution();
         }
 
         return (QueryBuilderType)this;
@@ -89,6 +140,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     #endregion
 
     protected virtual bool _Execute() {
+        throw new NotImplementedException();
+    }
+
+    protected virtual T _ExecuteScalar<T>() {
         throw new NotImplementedException();
     }
 
@@ -113,7 +168,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.DBQuery.SetQueryType(QueryBuilding.QueryType.COUNT);
 
         // Forcefully execute the query to retrieve the count
+        this._BeforeQueryExecution();
         this._Execute();
+        this._AfterQueryExecution();
 
         // Set the query type back
         this.DBQuery.SetQueryType(currentQueryType);

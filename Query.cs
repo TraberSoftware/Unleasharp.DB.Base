@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
@@ -94,11 +95,11 @@ public class Query<DBQueryType> : Renderable
     }
 
     public virtual string GetNextPreparedQueryValueLabel() {
-		Query<DBQueryType> targetQuery = this.ParentQuery != null ? this.ParentQuery : this;
-		string             prefix      = "@prepared_query_value_";
+        Query<DBQueryType> targetQuery = this.ParentQuery != null ? this.ParentQuery : this;
+        string             prefix      = "@prepared_query_value_";
 
-		return $"{prefix}{targetQuery.QueryPreparedData.Count}"; ;
-	}
+        return $"{prefix}{targetQuery.QueryPreparedData.Count}"; ;
+    }
     #endregion
 
     public virtual DBQueryType Reset() {
@@ -133,17 +134,17 @@ public class Query<DBQueryType> : Renderable
     #region Control parameters
     public bool HasChanged { get; private set; } = false;
 
-	public void Touch() {
-		this.HasChanged = true;
-	}
+    public void Touch() {
+        this.HasChanged = true;
+    }
 
-	public void Untouch() {
-		this.HasChanged = false;
-	}
-	#endregion
+    public void Untouch() {
+        this.HasChanged = false;
+    }
+    #endregion
 
-	#region Query rendering
-	public virtual string RenderPrepared() {
+    #region Query rendering
+    public virtual string RenderPrepared() {
         this._RenderPrepared();
         this.HasChanged = false;
 
@@ -156,9 +157,9 @@ public class Query<DBQueryType> : Renderable
 
     public virtual string Render() {
         this._Render();
-		this.HasChanged = false;
+        this.HasChanged = false;
 
-		return this.QueryPreparedString;
+        return this.QueryPreparedString;
     }
 
     public virtual void _Render() {
@@ -191,7 +192,7 @@ public class Query<DBQueryType> : Renderable
                     break;
             }
         }
-	}
+    }
 
     protected virtual void _RenderCountQuery() {
         List<string> queryGroups = new List<string> {
@@ -306,14 +307,27 @@ public class Query<DBQueryType> : Renderable
 
         this.QuerySelect.Add(select);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
     }
 
     public virtual DBQueryType Select(FieldSelector field) {
         return this.Select(new Select<DBQueryType> {
             Field = field
         });
+    }
+
+    public virtual DBQueryType Select<T>(Expression<Func<T, object>> expression) where T : class {
+        string tableName  = typeof(T).GetTableName();
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Select(new FieldSelector {
+                Table = tableName,
+                Field = columnName
+            });
+        }
+        return (DBQueryType)this;
     }
 
     public virtual DBQueryType Select(Query<DBQueryType> subquery, string alias = null) {
@@ -338,12 +352,20 @@ public class Query<DBQueryType> : Renderable
     }
     #endregion
 
-    #region Query building - Values for INSERT/SET
+    #region Query building - Set
     public virtual DBQueryType Set(Where<DBQueryType> setValue) {
         this.QuerySet.Add(setValue);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
+    }
+
+    public virtual DBQueryType Set(List<Where<DBQueryType>> setValues) {
+        foreach (Where<DBQueryType> setValue in setValues) {
+            this.Set(setValue);
+        }
+
+        return (DBQueryType)this;
     }
 
     public virtual DBQueryType Set(string fieldName, dynamic value, bool escape = true) {
@@ -354,7 +376,26 @@ public class Query<DBQueryType> : Renderable
         });
     }
 
-    public virtual DBQueryType Value(Dictionary<string, dynamic> row, bool skipNullValues = true) {
+    public virtual DBQueryType Set(Dictionary<string, dynamic> row, bool escape = true) {
+        foreach (KeyValuePair<string, dynamic> entry in row) {
+            this.Set(entry.Key, entry.Value, escape);
+        }
+
+        return (DBQueryType)this;
+    }
+
+    public virtual DBQueryType Set<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Set(columnName, value, escape);
+        }
+        return (DBQueryType)this;
+    }
+    #endregion
+
+    #region Query building - Values
+    public virtual DBQueryType Value(Dictionary<string, dynamic> row, bool skipNullValues = false) {
         foreach (string column in row.Keys) {
             if (!this.QueryColumns.Contains(column)) {
                 this.QueryColumns.Add(column);
@@ -362,19 +403,29 @@ public class Query<DBQueryType> : Renderable
         }
         this.QueryValues.Add(row);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
     }
 
-    public virtual DBQueryType Value<T>(T row, bool skipNullValues = true) where T : class {
+    public virtual DBQueryType Value<T>(T row, bool skipNullValues = false) where T : class {
         return this.Value(row.ToDynamicDictionary());
     }
 
-    public virtual DBQueryType Value(object row, bool skipNullValues = true) {
+    public virtual DBQueryType Value<T>(Action<T> action) where T : class {
+        T row = Activator.CreateInstance<T>();
+        if (action != null) {
+            action.Invoke(row);
+        }
+
+        return this.Value<T>(row);
+    }
+
+
+    public virtual DBQueryType Value(object row, bool skipNullValues = false) {
         return this.Value(row.ToDynamicDictionary());
     }
 
-    public virtual DBQueryType Values<T>(List<T> rows, bool skipNullValues = true) where T : class {
+    public virtual DBQueryType Values<T>(List<T> rows, bool skipNullValues = false) where T : class {
         foreach (T row in rows) {
             this.Value<T>(row, skipNullValues);
         }
@@ -382,7 +433,7 @@ public class Query<DBQueryType> : Renderable
         return (DBQueryType)this;
     }
 
-    public virtual DBQueryType Values(List<object> rows, bool skipNullValues = true) {
+    public virtual DBQueryType Values(List<object> rows, bool skipNullValues = false) {
         foreach (object row in rows) {
             this.Value(row, skipNullValues);
         }
@@ -395,8 +446,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType From(From<DBQueryType> fromSentence) {
         this.QueryFrom.Add(fromSentence);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
     }
 
     public virtual DBQueryType From<TableClass>() {
@@ -438,8 +489,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Join(Join<DBQueryType> sentence) {
         this.QueryJoin.Add(sentence);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
     }
 
     public virtual DBQueryType Join(string tableName, Where<DBQueryType> condition, JoinDirection direction = JoinDirection.NONE) {
@@ -498,8 +549,15 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Where(Where<DBQueryType> whereSentence) {
         this.QueryWhere.Add(whereSentence);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
+    }
+
+    public virtual DBQueryType Where(FieldSelector left, dynamic fieldValue) {
+        return this.Where(new Where<DBQueryType> {
+            Field = left,
+            Value = fieldValue
+        });
     }
 
     public virtual DBQueryType Where(string fieldName, dynamic fieldValue) {
@@ -507,6 +565,22 @@ public class Query<DBQueryType> : Renderable
             Field  = new FieldSelector(fieldName),
             Value = fieldValue
         });
+    }
+
+    public virtual DBQueryType Where<T>(Expression<Func<T, object>> expression, dynamic value) where T : class {
+        string tableName  = typeof(T).GetTableName();
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                }, 
+                value
+            );
+        }
+        return (DBQueryType)this;
     }
 
     public virtual DBQueryType Where(FieldSelector left, FieldSelector right) {
@@ -521,8 +595,15 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType WhereIn(WhereIn<DBQueryType> whereInSentence) {
         this.QueryWhereIn.Add(whereInSentence);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
+    }
+
+    public virtual DBQueryType WhereIn(FieldSelector left, List<dynamic> fieldValues) {
+        return this.WhereIn(new WhereIn<DBQueryType> {
+            Field  = left,
+            Values = fieldValues
+        });
     }
 
     public virtual DBQueryType WhereIn(string fieldName, List<dynamic> fieldValues) {
@@ -532,54 +613,110 @@ public class Query<DBQueryType> : Renderable
         });
     }
 
+    public virtual DBQueryType WhereIn<T>(Expression<Func<T, object>> expression, List<dynamic> fieldValues) where T : class {
+        string tableName  = typeof(T).GetTableName();
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.WhereIn(new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                fieldValues
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
     public virtual DBQueryType WhereIn(string fieldName, Query<DBQueryType> subquery) {
         return this.WhereIn(new WhereIn<DBQueryType> {
             Field    = new FieldSelector(fieldName),
             Subquery = subquery
         });
     }
-	#endregion
+    #endregion
 
-	#region Query building - Where LIKE
-	public virtual DBQueryType WhereLike(string fieldName, string fieldValue) {
-		return this.Where(new Where<DBQueryType> {
-			Field       = new FieldSelector(fieldName),
+    #region Query building - Where LIKE
+    public virtual DBQueryType WhereLike(FieldSelector left, string fieldValue) {
+        return this.Where(new Where<DBQueryType> {
+            Field       = left,
             Value       = fieldValue,
             Comparer    = WhereComparer.LIKE,
-			EscapeValue = true
-		});
-	}
-
-	public virtual DBQueryType WhereLikeLeft(string fieldName, string fieldValue) {
-		return this.Where(new Where<DBQueryType> {
-			Field       = new FieldSelector(fieldName),
-            Value       = $"%{fieldValue.TrimStart('%')}",
-            Comparer    = WhereComparer.LIKE_LEFT,
-			EscapeValue = true
-		});
-	}
-
-	public virtual DBQueryType WhereLikeRight(string fieldName, string fieldValue) {
-		return this.Where(new Where<DBQueryType> {
-			Field       = new FieldSelector(fieldName),
-            Value       = $"{fieldValue.TrimEnd('%')}%",
-            Comparer    = WhereComparer.LIKE_RIGHT,
             EscapeValue = true
-		});
-	}
-	#endregion
+        });
+    }
 
-	#region Query building - Group By
-	public virtual DBQueryType GroupBy(GroupBy group) {
+    public virtual DBQueryType WhereLike<T>(Expression<Func<T, object>> expression, string value, bool escape = true) where T : class {
+        string tableName  = typeof(T).GetTableName();
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> { 
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Value       = value,
+                Comparer    = WhereComparer.LIKE,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+   
+    public virtual DBQueryType WhereLike(string fieldName, string fieldValue) {
+        return this.WhereLike(
+            new FieldSelector(fieldName),
+            fieldValue
+        );
+    }
+
+    public virtual DBQueryType WhereLikeLeft(string fieldName, string fieldValue) {
+        return this.WhereLike(
+            new FieldSelector(fieldName),
+            $"%{fieldValue.TrimStart('%')}"
+        );
+    }
+
+    public virtual DBQueryType WhereLikeRight(string fieldName, string fieldValue) {
+        return this.WhereLike(
+            new FieldSelector(fieldName),
+            $"{fieldValue.TrimEnd('%')}%"
+        );
+    }
+    #endregion
+
+    #region Query building - Group By
+    public virtual DBQueryType GroupBy(GroupBy group) {
         this.QueryGroup.Add(group);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
     }
     public virtual DBQueryType GroupBy(FieldSelector field) {
         return this.GroupBy(new GroupBy {
             Field = field
         });
+    }
+
+    public virtual DBQueryType GroupBy<T>(Expression<Func<T, object>> expression) where T : class {
+        string tableName  = typeof(T).GetTableName();
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.GroupBy(new FieldSelector {
+                Table  = tableName,
+                Field  = columnName,
+                Escape = true
+            });
+        }
+
+        return (DBQueryType)this;
     }
 
     public virtual DBQueryType GroupBy(string fieldName, string tableName = null, bool escape = true) {
@@ -591,8 +728,30 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType OrderBy(OrderBy orderSentence) {
         this.QueryOrder.Add(orderSentence);
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
+    }
+
+    public virtual DBQueryType OrderBy(FieldSelector field, OrderDirection direction = OrderDirection.ASC) {
+        return this.OrderBy(new OrderBy {
+            Field     = field,
+            Direction = direction
+        });
+    }
+
+    public virtual DBQueryType OrderBy<T>(Expression<Func<T, object>> expression, OrderDirection direction = OrderDirection.ASC) where T : class {
+        string tableName  = typeof(T).GetTableName();
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.OrderBy(new FieldSelector {
+                Table  = tableName,
+                Field  = columnName,
+                Escape = true
+            }, direction);
+        }
+
+        return (DBQueryType)this;
     }
 
     public virtual DBQueryType OrderBy(string fieldName, OrderDirection direction = OrderDirection.ASC, bool escapeField = true) {
@@ -610,8 +769,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Limit(Limit limitSentence) {
         this.QueryLimit = limitSentence;
 
-		this.Touch();
-		return (DBQueryType) this;
+        this.Touch();
+        return (DBQueryType) this;
     }
 
     public virtual DBQueryType Limit(long count, long offset = 0) {
@@ -628,8 +787,8 @@ public class Query<DBQueryType> : Renderable
 
         this.QueryCreate = tableType;
 
-		this.Touch();
-		return (DBQueryType)this;
+        this.Touch();
+        return (DBQueryType)this;
     }
 
     public DBQueryType CreateTable<T>() where T : class {
@@ -639,17 +798,17 @@ public class Query<DBQueryType> : Renderable
     public DBQueryType Create<T>() where T : class {
         return this.CreateTable<T>();
     }
-	#endregion
+    #endregion
 
-	#region Query building - Raw
+    #region Query building - Raw
     public DBQueryType Raw(string query, string queryPreparedString) {
         this.SetQueryType(QueryType.RAW);
 
         this.QueryRenderedString = query;
         this.QueryPreparedString = queryPreparedString;
 
-		this.Untouch();
-		return (DBQueryType)this;
+        this.Untouch();
+        return (DBQueryType)this;
     }
     public DBQueryType Raw(string query) {
         return this.Raw(query, query);
@@ -658,9 +817,9 @@ public class Query<DBQueryType> : Renderable
     public DBQueryType Raw(string query, Dictionary<string, PreparedValue> queryPreparedData) {
         this.SetQueryType(QueryType.RAW);
 
-		this.QueryPreparedData = queryPreparedData;
+        this.QueryPreparedData = queryPreparedData;
 
-		return this.Raw(query);
+        return this.Raw(query);
     }
 
     public DBQueryType Raw(string query, Dictionary<string, dynamic> queryPreparedData) {
@@ -671,11 +830,11 @@ public class Query<DBQueryType> : Renderable
             dataItem => new PreparedValue { Value = dataItem.Value, EscapeValue = true }
         ));
     }
-	#endregion
-	#endregion
+    #endregion
+    #endregion
 
-	#region Query sentence rendering virtual methods
-	protected virtual string _RenderCountSentence()        { throw new NotImplementedException(); }
+    #region Query sentence rendering virtual methods
+    protected virtual string _RenderCountSentence()        { throw new NotImplementedException(); }
     protected virtual string _RenderSelectSentence()       { throw new NotImplementedException(); }
     protected virtual string _RenderFromSentence()         { throw new NotImplementedException(); }
     protected virtual string _RenderJoinSentence()         { throw new NotImplementedException(); }
