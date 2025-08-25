@@ -30,9 +30,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public int             TotalCount   { get; protected set; } = 0;
     public object          ScalarValue  { get; protected set; } = null;
 
-    public Action<DBQueryType> BeforeQueryExecutionAction { get; protected set; }
-    public Action<DBQueryType> AfterQueryExecutionAction  { get; protected set; }
-    public Action<Exception>   OnQueryExceptionAction     { get; private   set; }
+    public Action<DBQueryType>            BeforeQueryExecutionAction { get; protected set; }
+    public Action<DBQueryType>            AfterQueryExecutionAction  { get; protected set; }
+    public Action<DBQueryType, Exception> OnQueryExceptionAction     { get; private   set; }
 
     public QueryBuilder(DBConnectorType connector) {
         this.Connector = connector;
@@ -46,7 +46,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             this.DBQuery = query;
     }
 
-    public QueryBuilderType WithOnQueryExceptionAction(Action<Exception> onQueryExceptionAction) {
+    public QueryBuilderType WithOnQueryExceptionAction(Action<DBQueryType, Exception> onQueryExceptionAction) {
         this.OnQueryExceptionAction = onQueryExceptionAction;
 
         return (QueryBuilderType)this;
