@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using Unleasharp.DB.Base.ExtensionMethods;
 using Unleasharp.DB.Base.QueryBuilding;
 
 namespace Unleasharp.DB.Base.SchemaDefinition;
@@ -33,8 +34,8 @@ public class Column : NamedStructure {
     }
 
     public Column(Type tableType, string propertyName) {
-        string tableName  = tableType.GetCustomAttribute<Table>()?                                           .Name ?? tableType.Name;
-        string columnName = tableType.GetMember(propertyName).FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? propertyName;
+        string tableName  = tableType.GetTableName();
+        string columnName = tableType.GetColumnName(propertyName);
 
         this.Name = $"{tableName}::{columnName}";
     }

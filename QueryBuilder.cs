@@ -26,11 +26,14 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 {
     public DBConnectorType Connector    { get; private set;   }
     public DBQueryType     DBQuery      { get; private set;   }
-                                        
-    public DataTable       Result       { get; protected set; } = null;
-    public int             AffectedRows { get; protected set; } = 0;
-    public int             TotalCount   { get; protected set; } = 0;
-    public object          ScalarValue  { get; protected set; } = null;
+
+    #region Query result data
+    public DataTable       Result         { get; protected set; } = null;
+    public int             AffectedRows   { get; protected set; } = 0;
+    public int             TotalCount     { get; protected set; } = 0;
+    public object          ScalarValue    { get; protected set; } = null;
+    public object          LastInsertedId { get; protected set; } = 0;
+    #endregion
 
     public Action<DBQueryType>            BeforeQueryExecutionAction { get; protected set; }
     public Action<DBQueryType>            AfterQueryExecutionAction  { get; protected set; }
@@ -97,10 +100,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
     #region Query execution
     protected void _ResetResult() {
-        this.Result       = null;
-        this.AffectedRows = 0;
-        this.TotalCount   = 0;
-        this.ScalarValue  = null;
+        this.Result         = null;
+        this.AffectedRows   = 0;
+        this.TotalCount     = 0;
+        this.ScalarValue    = null;
+        this.LastInsertedId = null;
     }
 
     #region Query execution aliases
@@ -113,6 +117,66 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         }
 
         return (QueryBuilderType) this;
+    }
+    public virtual T Execute<T>(bool force = false) {
+        // Don't execute the query twice
+        if (this.Result == null || force) {
+            this._BeforeQueryExecution();
+            this._Execute();
+            this._AfterQueryExecution();
+        }
+
+        object? result = null;
+        switch (this.DBQuery.QueryType) {
+            case QueryType.COUNT:
+            case QueryType.SELECT:
+                result = true switch {
+                    true when typeof(T) == typeof(bool)  => this.TotalCount > 0,
+                    true when typeof(T) == typeof(int)   => this.TotalCount,
+                    true when typeof(T) == typeof(long)  => this.TotalCount,
+                    true when typeof(T) == typeof(uint)  => this.TotalCount,
+                    true when typeof(T) == typeof(ulong) => this.TotalCount
+                };
+                break;
+            case QueryType.INSERT:
+                result = true switch {
+                    true when typeof(T) == typeof(bool)   => this.AffectedRows == this.DBQuery.QueryValues.Count,
+                    true when typeof(T) == typeof(int)    => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
+                    true when typeof(T) == typeof(long)   => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
+                    true when typeof(T) == typeof(uint)   => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
+                    true when typeof(T) == typeof(ulong)  => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
+                    true when typeof(T) == typeof(string) => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows 
+                };
+                break;
+            case QueryType.UPDATE:
+                result = true switch {
+                    true when typeof(T) == typeof(bool)  => this.AffectedRows > 0,
+                    true when typeof(T) == typeof(int)   => this.AffectedRows,
+                    true when typeof(T) == typeof(long)  => this.AffectedRows,
+                    true when typeof(T) == typeof(uint)  => this.AffectedRows,
+                    true when typeof(T) == typeof(ulong) => this.AffectedRows
+                };
+                break;
+            case QueryType.DELETE:
+                result = true switch {
+                    true when typeof(T) == typeof(bool)  => this.AffectedRows > 0,
+                    true when typeof(T) == typeof(int)   => this.AffectedRows,
+                    true when typeof(T) == typeof(long)  => this.AffectedRows,
+                    true when typeof(T) == typeof(uint)  => this.AffectedRows,
+                    true when typeof(T) == typeof(ulong) => this.AffectedRows
+                };
+                break;
+            case QueryType.CREATE:
+                result = true switch {
+                    true when typeof(T) == typeof(bool) => this.AffectedRows > 0
+                };
+                break;
+        }
+
+        if (result != null) {
+            return (T)Convert.ChangeType(result, typeof(T));
+        }
+        return default(T);
     }
 
     public virtual T ExecuteScalar<T>(bool force = false) {

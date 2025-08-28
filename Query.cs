@@ -902,10 +902,6 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Helpers
-    protected string _GetKeyColumnName(Type tableType, string column) {
-        return tableType.GetMember(column)?.FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? column;
-    }
-
     public ColumnDataType? GetColumnDataType(string typeString) {
         return typeString.ToLowerInvariant() switch {
             "bool"      => ColumnDataType.Boolean,

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 using Unleasharp.DB.Base.SchemaDefinition;
 
@@ -6,6 +7,10 @@ namespace Unleasharp.DB.Base.ExtensionMethods;
 public static class TypeExtensions {
     public static string GetTableName(this Type type) {
         return type.GetCustomAttribute<Table>()?.Name ?? type.Name;
+    }
+
+    public static string GetColumnName(this Type type, string columnName) {
+        return type.GetMember(columnName)?.FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? columnName;
     }
 
     public static ColumnDataType GetColumnType(this Type type) {
