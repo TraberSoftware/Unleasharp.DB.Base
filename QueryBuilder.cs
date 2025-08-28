@@ -5,12 +5,14 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Unleasharp.DB.Base.ExtensionMethods;
 using Unleasharp.DB.Base.QueryBuilding;
+using Unleasharp.DB.Base.SchemaDefinition;
 using Unleasharp.ExtensionMethods;
 
 namespace Unleasharp.DB.Base;
@@ -178,6 +180,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         return this.TotalCount;
     }
 
+    #region Data iteration - Iterate
     public virtual IEnumerable<T> Iterate<T>(string byKeyField) where T : class {
         foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
             yield return row.GetObject<T>();
@@ -237,7 +240,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         this.DBQuery = originalQuery;
     }
+    #endregion
 
+    #region Data iteration - AsEnumerable
     public virtual IEnumerable<DataRow> AsEnumerable() {
         this.Execute();
 
@@ -269,7 +274,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             yield return row.GetObject<T>();
         }
     }
+    #endregion
 
+    #region Data iteration - ToList
     public virtual List<T> ToList<T>() where T : class{
         this.Execute();
 
@@ -281,7 +288,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         return this.Result?.AsEnumerable().Select(row => row.GetObject<T>()).ToList();
     }
+    #endregion
 
+    #region Data Iteration - FirstOrDefault
     public virtual DataRow FirstOrDefault() {
         this.Execute();
 
@@ -309,5 +318,629 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         return this.FirstOrDefault<T>();
     }
+    #endregion
+
+    #region Tuple enumerators
+    #region Tuple enumerators - FirstOrDefault
+    public virtual Tuple<T1, T2> FirstOrDefault<T1, T2>()
+        where T1 : class
+        where T2 : class {
+        this.Execute();
+        return this.FirstOrDefault()?.GetTuple<T1, T2>();
+    }
+
+    public virtual async Task<Tuple<T1, T2>> FirstOrDefaultAsync<T1, T2>()
+        where T1 : class
+        where T2 : class {
+        await this.ExecuteAsync();
+        return this.FirstOrDefault<T1, T2>();
+    }
+
+    public virtual Tuple<T1, T2, T3> FirstOrDefault<T1, T2, T3>()
+        where T1 : class
+        where T2 : class
+        where T3 : class {
+        this.Execute();
+        return this.FirstOrDefault()?.GetTuple<T1, T2, T3>();
+    }
+
+    public virtual async Task<Tuple<T1, T2, T3>> FirstOrDefaultAsync<T1, T2, T3>()
+        where T1 : class
+        where T2 : class
+        where T3 : class {
+        await this.ExecuteAsync();
+        return this.FirstOrDefault<T1, T2, T3>();
+    }
+
+    public virtual Tuple<T1, T2, T3, T4> FirstOrDefault<T1, T2, T3, T4>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class {
+        this.Execute();
+        return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4>();
+    }
+
+    public virtual async Task<Tuple<T1, T2, T3, T4>> FirstOrDefaultAsync<T1, T2, T3, T4>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class {
+        await this.ExecuteAsync();
+        return this.FirstOrDefault<T1, T2, T3, T4>();
+    }
+
+    public virtual Tuple<T1, T2, T3, T4, T5> FirstOrDefault<T1, T2, T3, T4, T5>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class {
+        this.Execute();
+        return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4, T5>();
+    }
+
+    public virtual async Task<Tuple<T1, T2, T3, T4, T5>> FirstOrDefaultAsync<T1, T2, T3, T4, T5>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class {
+        await this.ExecuteAsync();
+        return this.FirstOrDefault<T1, T2, T3, T4, T5>();
+    }
+
+    public virtual Tuple<T1, T2, T3, T4, T5, T6> FirstOrDefault<T1, T2, T3, T4, T5, T6>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class {
+        this.Execute();
+        return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4, T5, T6>();
+    }
+
+    public virtual async Task<Tuple<T1, T2, T3, T4, T5, T6>> FirstOrDefaultAsync<T1, T2, T3, T4, T5, T6>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class {
+        await this.ExecuteAsync();
+        return this.FirstOrDefault<T1, T2, T3, T4, T5, T6>();
+    }
+
+    public virtual Tuple<T1, T2, T3, T4, T5, T6, T7> FirstOrDefault<T1, T2, T3, T4, T5, T6, T7>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class {
+        this.Execute();
+        return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4, T5, T6, T7>();
+    }
+
+    public virtual async Task<Tuple<T1, T2, T3, T4, T5, T6, T7>> FirstOrDefaultAsync<T1, T2, T3, T4, T5, T6, T7>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class {
+        await this.ExecuteAsync();
+        return this.FirstOrDefault<T1, T2, T3, T4, T5, T6, T7>();
+    }
+
+    public virtual Tuple<T1, T2, T3, T4, T5, T6, T7, T8> FirstOrDefault<T1, T2, T3, T4, T5, T6, T7, T8>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class
+        where T8 : class {
+        this.Execute();
+        return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>();
+    }
+
+    public virtual async Task<Tuple<T1, T2, T3, T4, T5, T6, T7, T8>> FirstOrDefaultAsync<T1, T2, T3, T4, T5, T6, T7, T8>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class
+        where T8 : class {
+        await this.ExecuteAsync();
+        return this.FirstOrDefault<T1, T2, T3, T4, T5, T6, T7, T8>();
+    }
+    #endregion
+
+    #region Tuple enumerators - AsEnumerable
+    public virtual IEnumerable<Tuple<T1, T2>> AsEnumerable<T1, T2>()
+        where T1 : class 
+        where T2 : class 
+    {
+        this.Execute();
+
+        foreach (DataRow row in this.AsEnumerable()) {
+            yield return row.GetTuple<T1, T2>();
+        }
+    }
+
+    public virtual async IAsyncEnumerable<Tuple<T1, T2>> AsEnumerableAsync<T1, T2>()
+        where T1 : class
+        where T2 : class 
+    {
+        await this.ExecuteAsync();
+
+        await foreach (DataRow row in this.AsEnumerableAsync()) {
+            yield return row.GetTuple<T1, T2>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3>> AsEnumerable<T1, T2, T3>()
+        where T1 : class
+        where T2 : class
+        where T3 : class {
+        this.Execute();
+        foreach (DataRow row in this.AsEnumerable()) {
+            yield return row.GetTuple<T1, T2, T3>();
+        }
+    }
+
+    public virtual async IAsyncEnumerable<Tuple<T1, T2, T3>> AsEnumerableAsync<T1, T2, T3>()
+        where T1 : class
+        where T2 : class
+        where T3 : class {
+        await this.ExecuteAsync();
+        await foreach (DataRow row in this.AsEnumerableAsync()) {
+            yield return row.GetTuple<T1, T2, T3>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4>> AsEnumerable<T1, T2, T3, T4>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class {
+        this.Execute();
+        foreach (DataRow row in this.AsEnumerable()) {
+            yield return row.GetTuple<T1, T2, T3, T4>();
+        }
+    }
+
+    public virtual async IAsyncEnumerable<Tuple<T1, T2, T3, T4>> AsEnumerableAsync<T1, T2, T3, T4>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class {
+        await this.ExecuteAsync();
+        await foreach (DataRow row in this.AsEnumerableAsync()) {
+            yield return row.GetTuple<T1, T2, T3, T4>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5>> AsEnumerable<T1, T2, T3, T4, T5>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class {
+        this.Execute();
+        foreach (DataRow row in this.AsEnumerable()) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5>();
+        }
+    }
+
+    public virtual async IAsyncEnumerable<Tuple<T1, T2, T3, T4, T5>> AsEnumerableAsync<T1, T2, T3, T4, T5>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class {
+        await this.ExecuteAsync();
+        await foreach (DataRow row in this.AsEnumerableAsync()) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6>> AsEnumerable<T1, T2, T3, T4, T5, T6>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class {
+        this.Execute();
+        foreach (DataRow row in this.AsEnumerable()) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6>();
+        }
+    }
+
+    public virtual async IAsyncEnumerable<Tuple<T1, T2, T3, T4, T5, T6>> AsEnumerableAsync<T1, T2, T3, T4, T5, T6>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class {
+        await this.ExecuteAsync();
+        await foreach (DataRow row in this.AsEnumerableAsync()) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6, T7>> AsEnumerable<T1, T2, T3, T4, T5, T6, T7>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class {
+        this.Execute();
+        foreach (DataRow row in this.AsEnumerable()) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7>();
+        }
+    }
+
+    public virtual async IAsyncEnumerable<Tuple<T1, T2, T3, T4, T5, T6, T7>> AsEnumerableAsync<T1, T2, T3, T4, T5, T6, T7>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class {
+        await this.ExecuteAsync();
+        await foreach (DataRow row in this.AsEnumerableAsync()) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6, T7, T8>> AsEnumerable<T1, T2, T3, T4, T5, T6, T7, T8>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class
+        where T8 : class {
+        this.Execute();
+        foreach (DataRow row in this.AsEnumerable()) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>();
+        }
+    }
+
+    public virtual async IAsyncEnumerable<Tuple<T1, T2, T3, T4, T5, T6, T7, T8>> AsEnumerableAsync<T1, T2, T3, T4, T5, T6, T7, T8>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class
+        where T8 : class {
+        await this.ExecuteAsync();
+        await foreach (DataRow row in this.AsEnumerableAsync()) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>();
+        }
+    }
+    #endregion
+
+    #region Tuple enumerators - ToList
+    public virtual List<Tuple<T1, T2>> ToList<T1, T2>()
+        where T1 : class
+        where T2 : class 
+    {
+        this.Execute();
+
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2>()).ToList();
+    }
+
+    public virtual async Task<List<Tuple<T1, T2>>> ToListAsync<T1, T2>()
+        where T1 : class
+        where T2 : class {
+        await this.ExecuteAsync();
+
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2>()).ToList();
+    }
+
+    public virtual List<Tuple<T1, T2, T3>> ToList<T1, T2, T3>()
+        where T1 : class
+        where T2 : class
+        where T3 : class {
+        this.Execute();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3>()).ToList();
+    }
+
+    public virtual async Task<List<Tuple<T1, T2, T3>>> ToListAsync<T1, T2, T3>()
+        where T1 : class
+        where T2 : class
+        where T3 : class {
+        await this.ExecuteAsync();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3>()).ToList();
+    }
+
+    public virtual List<Tuple<T1, T2, T3, T4>> ToList<T1, T2, T3, T4>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class {
+        this.Execute();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4>()).ToList();
+    }
+
+    public virtual async Task<List<Tuple<T1, T2, T3, T4>>> ToListAsync<T1, T2, T3, T4>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class {
+        await this.ExecuteAsync();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4>()).ToList();
+    }
+
+    public virtual List<Tuple<T1, T2, T3, T4, T5>> ToList<T1, T2, T3, T4, T5>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class {
+        this.Execute();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5>()).ToList();
+    }
+
+    public virtual async Task<List<Tuple<T1, T2, T3, T4, T5>>> ToListAsync<T1, T2, T3, T4, T5>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class {
+        await this.ExecuteAsync();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5>()).ToList();
+    }
+
+    public virtual List<Tuple<T1, T2, T3, T4, T5, T6>> ToList<T1, T2, T3, T4, T5, T6>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class {
+        this.Execute();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6>()).ToList();
+    }
+
+    public virtual async Task<List<Tuple<T1, T2, T3, T4, T5, T6>>> ToListAsync<T1, T2, T3, T4, T5, T6>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class {
+        await this.ExecuteAsync();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6>()).ToList();
+    }
+
+    public virtual List<Tuple<T1, T2, T3, T4, T5, T6, T7>> ToList<T1, T2, T3, T4, T5, T6, T7>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class {
+        this.Execute();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7>()).ToList();
+    }
+
+    public virtual async Task<List<Tuple<T1, T2, T3, T4, T5, T6, T7>>> ToListAsync<T1, T2, T3, T4, T5, T6, T7>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class {
+        await this.ExecuteAsync();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7>()).ToList();
+    }
+
+    public virtual List<Tuple<T1, T2, T3, T4, T5, T6, T7, T8>> ToList<T1, T2, T3, T4, T5, T6, T7, T8>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class
+        where T8 : class {
+        this.Execute();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>()).ToList();
+    }
+
+    public virtual async Task<List<Tuple<T1, T2, T3, T4, T5, T6, T7, T8>>> ToListAsync<T1, T2, T3, T4, T5, T6, T7, T8>()
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class
+        where T8 : class {
+        await this.ExecuteAsync();
+        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>()).ToList();
+    }
+    #endregion
+
+    #region Tuple enumerators - Iterate
+
+    public virtual IEnumerable<Tuple<T1, T2>> Iterate<T1, T2>(string byKeyField) 
+        where T1 : class
+        where T2 : class 
+    {
+        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
+            yield return row.GetTuple<T1, T2>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2>> Iterate<T1, T2>(FieldSelector byKeyField)
+        where T1 : class
+        where T2 : class 
+    {
+        foreach (DataRow row in this.Iterate(byKeyField)) {
+            yield return row.GetTuple<T1, T2>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3>> Iterate<T1, T2, T3>(string byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class {
+        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
+            yield return row.GetTuple<T1, T2, T3>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3>> Iterate<T1, T2, T3>(FieldSelector byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class {
+        foreach (DataRow row in this.Iterate(byKeyField)) {
+            yield return row.GetTuple<T1, T2, T3>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4>> Iterate<T1, T2, T3, T4>(string byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class {
+        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
+            yield return row.GetTuple<T1, T2, T3, T4>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4>> Iterate<T1, T2, T3, T4>(FieldSelector byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class {
+        foreach (DataRow row in this.Iterate(byKeyField)) {
+            yield return row.GetTuple<T1, T2, T3, T4>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5>> Iterate<T1, T2, T3, T4, T5>(string byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class {
+        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5>> Iterate<T1, T2, T3, T4, T5>(FieldSelector byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class {
+        foreach (DataRow row in this.Iterate(byKeyField)) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6>> Iterate<T1, T2, T3, T4, T5, T6>(string byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class {
+        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6>> Iterate<T1, T2, T3, T4, T5, T6>(FieldSelector byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class {
+        foreach (DataRow row in this.Iterate(byKeyField)) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6, T7>> Iterate<T1, T2, T3, T4, T5, T6, T7>(string byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class {
+        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6, T7>> Iterate<T1, T2, T3, T4, T5, T6, T7>(FieldSelector byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class {
+        foreach (DataRow row in this.Iterate(byKeyField)) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6, T7, T8>> Iterate<T1, T2, T3, T4, T5, T6, T7, T8>(string byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class
+        where T8 : class {
+        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>();
+        }
+    }
+
+    public virtual IEnumerable<Tuple<T1, T2, T3, T4, T5, T6, T7, T8>> Iterate<T1, T2, T3, T4, T5, T6, T7, T8>(FieldSelector byKeyField)
+        where T1 : class
+        where T2 : class
+        where T3 : class
+        where T4 : class
+        where T5 : class
+        where T6 : class
+        where T7 : class
+        where T8 : class {
+        foreach (DataRow row in this.Iterate(byKeyField)) {
+            yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>();
+        }
+    }
+    #endregion
+    #endregion
+
     #endregion
 }

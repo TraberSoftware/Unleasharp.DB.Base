@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Unleasharp.DB.Base.SchemaDefinition;
 
 public class NamedStructure : Attribute {
-    public string Name { get; }
+    public string Name { get; protected set; }
 
     public NamedStructure() { }
 

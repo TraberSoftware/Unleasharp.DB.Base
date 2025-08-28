@@ -317,6 +317,28 @@ public class Query<DBQueryType> : Renderable
         });
     }
 
+    public virtual DBQueryType Select<T>() where T : class{
+        Table table = typeof(T).GetCustomAttribute<Table>();
+        if (table != null) {
+            string tableName = typeof(T).GetTableName();
+
+            foreach (PropertyInfo propertyInfo in typeof(T).GetProperties()) {
+                string columnName = propertyInfo.Name;
+                Column column     = propertyInfo.GetCustomAttribute<Column>();
+                if (column != null) {
+                    columnName = column.Name;
+                }
+                this.Select(new FieldSelector {
+                    Table  = tableName, 
+                    Field  = columnName,
+                    Escape = true
+                });
+            }
+        }
+
+        return (DBQueryType)this;
+    }
+
     public virtual DBQueryType Select<T>(Expression<Func<T, object>> expression) where T : class {
         string tableName  = typeof(T).GetTableName();
         string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
@@ -491,6 +513,28 @@ public class Query<DBQueryType> : Renderable
 
         this.Touch();
         return (DBQueryType) this;
+    }
+
+    public virtual DBQueryType Join<JoinedTable, ParentTable>(Expression<Func<JoinedTable, object>> joinedTableExpression, Expression<Func<ParentTable, object>> parentTableExpression, WhereComparer comparer = WhereComparer.EQUALS, JoinDirection direction = JoinDirection.NONE) 
+        where JoinedTable : class
+        where ParentTable : class
+    {
+        string joinedTableName       = typeof(JoinedTable).GetTableName();
+        string joinedTableColumnName = ExpressionHelper.ExtractColumnName<JoinedTable>(joinedTableExpression);
+        string parentTableName       = typeof(ParentTable).GetTableName();
+        string parentTableColumnName = ExpressionHelper.ExtractColumnName<ParentTable>(parentTableExpression);
+
+        return this.Join(new Join<DBQueryType> {
+            Direction   = direction,
+            Table       = joinedTableName,
+            EscapeTable = true,
+            Condition   = new Where<DBQueryType> {
+                Field       = new FieldSelector { Table = joinedTableName, Field = joinedTableColumnName, Escape = true },
+                ValueField  = new FieldSelector { Table = parentTableName, Field = parentTableColumnName, Escape = true },
+                Comparer    = comparer,
+                EscapeValue = true
+            }
+        });
     }
 
     public virtual DBQueryType Join(string tableName, Where<DBQueryType> condition, JoinDirection direction = JoinDirection.NONE) {

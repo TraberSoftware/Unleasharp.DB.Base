@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Unleasharp.DB.Base.QueryBuilding;
@@ -28,6 +30,13 @@ public class Column : NamedStructure {
 
     public Column(string name, string dataType)         : base(name) {
         DataTypeString = dataType;
+    }
+
+    public Column(Type tableType, string propertyName) {
+        string tableName  = tableType.GetCustomAttribute<Table>()?                                           .Name ?? tableType.Name;
+        string columnName = tableType.GetMember(propertyName).FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? propertyName;
+
+        this.Name = $"{tableName}::{columnName}";
     }
 }
 
