@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Unleasharp.DB.Base.QueryBuilding;
@@ -105,6 +106,30 @@ public class ForeignKey : TableKey {
     public ForeignKey(string name) : base(name) { }
 
     public ForeignKey(string name, string column, string referencedTable, string referencedColumn) : base(name) {
+        Column           = column;
+        ReferencedTable  = referencedTable;
+        ReferencedColumn = referencedColumn;
+    }
+
+    public ForeignKey(string column, string referencedTable, string referencedColumn) : base(column) {
+        Column           = column;
+        ReferencedTable  = referencedTable;
+        ReferencedColumn = referencedColumn;
+    }
+
+    public ForeignKey(string name, string column, Type referencedTableType, string referencedColumnName) : base(name) {
+        string referencedTable  = referencedTableType.GetCustomAttribute<Table>()?                                                   .Name ?? referencedTableType.Name;
+        string referencedColumn = referencedTableType.GetMember(referencedColumnName).FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? referencedColumnName;
+
+        Column           = column;
+        ReferencedTable  = referencedTable;
+        ReferencedColumn = referencedColumn;
+    }
+
+    public ForeignKey(string column, Type referencedTableType, string referencedColumnName) : base(column) {
+        string referencedTable  = referencedTableType.GetCustomAttribute<Table>()?                                                   .Name ?? referencedTableType.Name;
+        string referencedColumn = referencedTableType.GetMember(referencedColumnName).FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? referencedColumnName;
+
         Column           = column;
         ReferencedTable  = referencedTable;
         ReferencedColumn = referencedColumn;

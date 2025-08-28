@@ -182,20 +182,26 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
     #region Data iteration - Iterate
     public virtual IEnumerable<T> Iterate<T>(string byKeyField) where T : class {
+        this.DBQuery.From<T>();
+
         foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
             yield return row.GetObject<T>();
         }
     }
 
     public virtual IEnumerable<T> Iterate<T>(FieldSelector byKeyField) where T : class {
+        this.DBQuery.From<T>();
+
         foreach (DataRow row in this.Iterate(byKeyField)) {
             yield return row.GetObject<T>();
         }
     }
 
     public virtual IEnumerable<DataRow> Iterate(FieldSelector byKeyField) {
-        ulong lastId   = 0;
-        bool  endFound = false;
+        this.DBQuery.Select();
+
+        long lastId   = 0;
+        bool endFound = false;
 
         DBQueryType originalQuery = this.DBQuery.DeepCopy();
 
@@ -204,10 +210,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             DBQueryType cachedQuery = originalQuery.DeepCopy();
 
             cachedQuery.Where(new Where<DBQueryType> {
-                Field    = byKeyField,
-                Operator = WhereOperator.AND,
-                Comparer = WhereComparer.GREATER,
-                Value    = lastId
+                Field       = byKeyField,
+                Operator    = WhereOperator.AND,
+                Comparer    = WhereComparer.GREATER,
+                Value       = lastId,
+                EscapeValue = true
             });
             this.DBQuery = cachedQuery;
 
@@ -219,7 +226,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
             foreach (DataRow row in resultEnumerator) {
                 try {
-                    if (row[byKeyField.Field].TryConvert<ulong>(out ulong latestRowId)) { 
+                    if (row[byKeyField.Field].TryConvert<long>(out long latestRowId)) { 
                         if (latestRowId > lastId) {
                             lastId = latestRowId;
                         }
