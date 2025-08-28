@@ -118,8 +118,8 @@ public class ForeignKey : TableKey {
     }
 
     public ForeignKey(string name, string column, Type referencedTableType, string referencedColumnName) : base(name) {
-        string referencedTable  = referencedTableType.GetCustomAttribute<Table>()?                                                   .Name ?? referencedTableType.Name;
-        string referencedColumn = referencedTableType.GetMember(referencedColumnName).FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? referencedColumnName;
+        string referencedTable  = referencedTableType.GetCustomAttribute<Table>()?                                                    .Name ?? referencedTableType.Name;
+        string referencedColumn = referencedTableType.GetMember(referencedColumnName)?.FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? referencedColumnName;
 
         Column           = column;
         ReferencedTable  = referencedTable;
@@ -127,8 +127,8 @@ public class ForeignKey : TableKey {
     }
 
     public ForeignKey(string column, Type referencedTableType, string referencedColumnName) : base(column) {
-        string referencedTable  = referencedTableType.GetCustomAttribute<Table>()?                                                   .Name ?? referencedTableType.Name;
-        string referencedColumn = referencedTableType.GetMember(referencedColumnName).FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? referencedColumnName;
+        string referencedTable  = referencedTableType.GetCustomAttribute<Table>()?                                                    .Name ?? referencedTableType.Name;
+        string referencedColumn = referencedTableType.GetMember(referencedColumnName)?.FirstOrDefault()?.GetCustomAttribute<Column>()?.Name ?? referencedColumnName;
 
         Column           = column;
         ReferencedTable  = referencedTable;

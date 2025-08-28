@@ -38,7 +38,7 @@ The library follows a **CRTP (Curiously Recurring Template Pattern)** approach w
 
 ## 📖 Documentation Resources
 
-- 📚 **[GitHub Wiki](https://github.com/TraberSoftware/Unleasharp.DB.Base/wiki)** - Complete documentation
+- 📚 **[GitHub Wiki](https://github.com/TraberSoftware/Unleasharp.DB.Base/wiki/1.-Home)** - Complete documentation
 - 🎯 **[Getting Started Guide](https://github.com/TraberSoftware/Unleasharp.DB.Base/wiki/2.-Getting-Started)** - Quick start guide
 
 ## 🚀 Database Engine Implementations
