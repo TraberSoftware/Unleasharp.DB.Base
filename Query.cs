@@ -329,11 +329,12 @@ public class Query<DBQueryType> : Renderable
                     continue;
                 }
 
-                string columnName = propertyInfo.Name;
-                Column column     = propertyInfo.GetCustomAttribute<Column>();
+                string         columnName = propertyInfo.Name;
+                NamedStructure column     = propertyInfo.GetCustomAttribute<NamedStructure>();
                 if (column != null) {
                     columnName = column.Name;
                 }
+
                 this.Select(new FieldSelector {
                     Table  = tableName, 
                     Field  = columnName,
