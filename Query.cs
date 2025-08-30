@@ -17,6 +17,8 @@ namespace Unleasharp.DB.Base;
 public class Query<DBQueryType> : Renderable
     where DBQueryType : Query<DBQueryType> 
 {
+    protected virtual DatabaseEngine _Engine { get; }
+
     #region Syntax sugar
     public virtual T GetThis<T>() where T : Query<DBQueryType> {
         return (T) this;
@@ -323,6 +325,10 @@ public class Query<DBQueryType> : Renderable
             string tableName = typeof(T).GetTableName();
 
             foreach (PropertyInfo propertyInfo in typeof(T).GetProperties()) {
+                if (!propertyInfo.IsReadableSystemColumn(this._Engine)) {
+                    continue;
+                }
+
                 string columnName = propertyInfo.Name;
                 Column column     = propertyInfo.GetCustomAttribute<Column>();
                 if (column != null) {
@@ -344,11 +350,15 @@ public class Query<DBQueryType> : Renderable
         string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
-            return this.Select(new FieldSelector {
-                Table = tableName,
-                Field = columnName
-            });
+            MemberInfo? columnMember = typeof(T).GetMember(columnName)?.FirstOrDefault();
+            if (columnMember != null && columnMember.IsReadableSystemColumn(this._Engine)) {
+                return this.Select(new FieldSelector {
+                    Table = tableName,
+                    Field = columnName
+                });
+            }
         }
+
         return (DBQueryType)this;
     }
 
@@ -407,10 +417,18 @@ public class Query<DBQueryType> : Renderable
     }
 
     public virtual DBQueryType Set<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
+        string tableName  = typeof(T).GetTableName();
         string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
-            return this.Set(columnName, value, escape);
+            MemberInfo? columnMember = typeof(T).GetMember(columnName)?.FirstOrDefault();
+            if (columnMember != null && !columnMember.IsSystemColumn()) {
+                return this.Set(
+                    new FieldSelector(tableName, columnName, true),
+                    value,
+                    escape
+                );
+            }
         }
         return (DBQueryType)this;
     }

@@ -8,7 +8,7 @@ using Unleasharp.DB.Base.SchemaDefinition;
 
 namespace Unleasharp.DB.Base.ExtensionMethods;
 
-public static class Object {
+public static class ObjectExtensions {
     public static Dictionary<string, dynamic> ToDynamicDictionary(this object row) {
         Dictionary<string, dynamic> result = new Dictionary<string, dynamic>();
 
@@ -26,6 +26,11 @@ public static class Object {
     }
 
     private static void __HandleObjectMemberInfo(object row, MemberInfo memberInfo, Dictionary<string, dynamic> result) {
+        // Disable writing to system columns
+        if (memberInfo.IsSystemColumn()) {
+            return;
+        }
+
         string         dbColumnName = memberInfo.Name;
         NamedStructure attribute    = memberInfo.GetCustomAttribute<NamedStructure>();
         Column         column       = memberInfo.GetCustomAttribute<Column>();

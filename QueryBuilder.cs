@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -245,26 +246,56 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     }
 
     #region Data iteration - Iterate
-    public virtual IEnumerable<T> Iterate<T>(string byKeyField) where T : class {
-        this.DBQuery.From<T>();
+    public virtual IEnumerable<T> Iterate<T>(string byKeyField, long offset = 0, int batchSize = 100) where T : class {
+        if (this.DBQuery.QuerySelect.Count == 0) {
+            this.DBQuery.Select<T>();
+        }
+        if (this.DBQuery.QueryFrom.Count == 0) {
+            this.DBQuery.From<T>();
+        }
 
-        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField))) {
+        foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField), offset, batchSize)) {
             yield return row.GetObject<T>();
         }
     }
 
-    public virtual IEnumerable<T> Iterate<T>(FieldSelector byKeyField) where T : class {
-        this.DBQuery.From<T>();
+    public virtual IEnumerable<T> Iterate<T>(FieldSelector byKeyField, long offset = 0, int batchSize = 100) where T : class {
+        if (this.DBQuery.QuerySelect.Count == 0) {
+            this.DBQuery.Select<T>();
+        }
+        if (this.DBQuery.QueryFrom.Count == 0) {
+            this.DBQuery.From<T>();
+        }
 
-        foreach (DataRow row in this.Iterate(byKeyField)) {
+        foreach (DataRow row in this.Iterate(byKeyField, offset, batchSize)) {
             yield return row.GetObject<T>();
         }
     }
 
-    public virtual IEnumerable<DataRow> Iterate(FieldSelector byKeyField) {
+    public virtual IEnumerable<T> Iterate<T>(Expression<Func<T, object>> expression, long offset = 0, int batchSize = 100) where T : class {
+        string tableName  = typeof(T).GetTableName();
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (this.DBQuery.QuerySelect.Count == 0) {
+            this.DBQuery.Select<T>();
+        }
+        if (this.DBQuery.QueryFrom.Count == 0) {
+            this.DBQuery.From<T>();
+        }
+
+        foreach (DataRow row in this.Iterate(new FieldSelector {
+            Table  = tableName,
+            Field  = columnName,
+            Escape = true
+        }, offset, batchSize)) {
+            yield return row.GetObject<T>();
+        }
+    }
+
+    public virtual IEnumerable<DataRow> Iterate(FieldSelector byKeyField, long offset = 0, int batchSize = 100) {
         this.DBQuery.Select();
 
-        long lastId   = 0;
+        long lastId   = offset;
         bool endFound = false;
 
         DBQueryType originalQuery = this.DBQuery.DeepCopy();
@@ -280,6 +311,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
                 Value       = lastId,
                 EscapeValue = true
             });
+            cachedQuery.Limit(batchSize);
             this.DBQuery = cachedQuery;
 
             IEnumerable<DataRow> resultEnumerator = this.AsEnumerable();
@@ -290,7 +322,12 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
             foreach (DataRow row in resultEnumerator) {
                 try {
-                    if (row[byKeyField.Field].TryConvert<long>(out long latestRowId)) { 
+                    string byKeyColumnName = !string.IsNullOrWhiteSpace(byKeyField.Table) ? $"{byKeyField.Table}::{byKeyField.Field}" : byKeyField.Field;
+                    if (!row.Table.Columns.Contains(byKeyColumnName)) {
+                        byKeyColumnName = byKeyField.Field;
+                    }
+
+                    if (row[byKeyColumnName].TryConvert<long>(out long latestRowId)) { 
                         if (latestRowId > lastId) {
                             lastId = latestRowId;
                         }
