@@ -138,7 +138,7 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     /// <summary>
     /// Initializes a new instance of ConnectorManager with a raw connection string.
     /// </summary>
-    /// <param name="connectionString">The full MySQL connection string</param>
+    /// <param name="connectionString">The full connection string</param>
     public ConnectorManager(string connectionString) {
         this.ConnectionString = connectionString;
     }
