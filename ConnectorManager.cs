@@ -22,7 +22,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     where DBQueryBuilderType      : QueryBuilder<DBQueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType>
     where DBQueryType             : Query<DBQueryType>
 {
-    private Dictionary<long, DBConnectorType> _connectorStack = new Dictionary<long, DBConnectorType>();
+    private object                            _connectorStackLock = new object();
+    private Dictionary<long, DBConnectorType> _connectorStack     = new Dictionary<long, DBConnectorType>();
 
     public DBConnectorSettingsType ConnectionStringBuilder { get; protected set; }
     public string                  ConnectionString        { get; protected set; }
@@ -209,21 +210,23 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
         DBConnectorType dBconnector = null;
         long            threadId    = Thread.CurrentThread.ManagedThreadId;
 
-        if (this._connectorStack.ContainsKey(threadId)) {
-            dBconnector = this._connectorStack[threadId];
-        }
+        lock (_connectorStackLock) {
+            if (this._connectorStack.ContainsKey(threadId)) {
+                dBconnector = this._connectorStack[threadId];
+            }
 
-        // Instance exists, but is disconnected
-        if (dBconnector != null && !dBconnector.Connected) {
-            dBconnector = null;
-            this._connectorStack.Remove(threadId);
-        }
+            // Instance exists, but is disconnected
+            if (dBconnector != null && !dBconnector.Connected) {
+                dBconnector = null;
+                this._connectorStack.Remove(threadId);
+            }
 
-        // Instance does not exist, create it
-        if (dBconnector == null) {
-            dBconnector = this.__GenerateDBTypeInstance();
+            // Instance does not exist, create it
+            if (dBconnector == null) {
+                dBconnector = this.__GenerateDBTypeInstance();
 
-            this._connectorStack.Add(threadId, dBconnector);
+                this._connectorStack.Add(threadId, dBconnector);
+            }
         }
 
         this.__Initialize(dBconnector);
