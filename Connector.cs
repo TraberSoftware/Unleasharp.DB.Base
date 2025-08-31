@@ -6,26 +6,50 @@ using System.Text;
 
 namespace Unleasharp.DB.Base;
 
+/// <summary>
+/// Represents a generic database connector that provides functionality for managing database connections and
+/// configuration settings.
+/// </summary>
+/// <remarks>This class serves as a base for implementing database connectors with customizable connection
+/// settings and connection management functionality. It provides methods to connect to and disconnect from a database,
+/// as well as properties to access connection-related information such as the connection state and timestamp.</remarks>
+/// <typeparam name="DBConnectorType">The specific type of the database connector implementation.</typeparam>
+/// <typeparam name="DBConnectorSettingsType">The type of the database connection settings, which must derive from <see cref="DbConnectionStringBuilder"/>.</typeparam>
 public partial class Connector<DBConnectorType, DBConnectorSettingsType> 
     where DBConnectorType         : Connector<DBConnectorType, DBConnectorSettingsType>
     where DBConnectorSettingsType : DbConnectionStringBuilder 
 {
-    public            Type                   DatabaseConnectorType {
+    /// <summary>
+    /// Gets the <see cref="Type"/> of the database connector used by the application.
+    /// </summary>
+    public            Type                      DatabaseConnectorType {
         get {
             return typeof(DBConnectorType);
         }
     }
 
-    public            bool                   Connected {
+    /// <summary>
+    /// Gets a value indicating whether the connection is currently active.
+    /// </summary>
+    public            bool                      Connected {
         get {
             return this._Connected();
         }
     }
 
+    /// <summary>
+    /// Gets the timestamp of when the connection was established.
+    /// </summary>
     public            DateTime                  ConnectionTimestamp { get; protected set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Gets the <see cref="DbConnectionStringBuilder"/> instance used to construct and manage the connection string.
+    /// </summary>
     public            DbConnectionStringBuilder StringBuilder { get; protected set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Connector"/> class.
+    /// </summary>
     public Connector() {
     }
 
