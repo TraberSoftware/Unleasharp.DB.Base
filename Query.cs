@@ -30,21 +30,22 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Query parameters
-    public List<Select <DBQueryType>>        QuerySelect  { get; protected set; } = new List<Select <DBQueryType>>();
-    public List<From   <DBQueryType>>        QueryFrom    { get; protected set; } = new List<From   <DBQueryType>>();
-    public List<Join   <DBQueryType>>        QueryJoin    { get; protected set; } = new List<Join   <DBQueryType>>();
-    public List<Where  <DBQueryType>>        QueryWhere   { get; protected set; } = new List<Where  <DBQueryType>>();
-    public List<WhereIn<DBQueryType>>        QueryWhereIn { get; protected set; } = new List<WhereIn<DBQueryType>>();
-    public List<Where  <DBQueryType>>        QueryHaving  { get; protected set; } = new List<Where  <DBQueryType>>();
-    public List<Where  <DBQueryType>>        QuerySet     { get; protected set; } = new List<Where  <DBQueryType>>();
-    public List<Dictionary<string, dynamic>> QueryValues  { get; protected set; } = new List<Dictionary<string, dynamic>>();
-    public List<string>                      QueryColumns { get; protected set; } = new List<string>                     ();
-    public FieldSelector                     QueryInto    { get; protected set; }
-    public Type                              QueryCreate  { get; protected set; }
-    public List<GroupBy>                     QueryGroup   { get; protected set; } = new List<GroupBy>();
-    public List<OrderBy>                     QueryOrder   { get; protected set; } = new List<OrderBy>();
-    public Limit                             QueryLimit   { get; protected set; }
-    public QueryType                         QueryType    { get; protected set; } = QueryType.RAW;
+    public bool                              QueryDistinct { get; protected set; } = false;
+    public List<Select <DBQueryType>>        QuerySelect   { get; protected set; } = new List<Select <DBQueryType>>();
+    public List<From   <DBQueryType>>        QueryFrom     { get; protected set; } = new List<From   <DBQueryType>>();
+    public List<Join   <DBQueryType>>        QueryJoin     { get; protected set; } = new List<Join   <DBQueryType>>();
+    public List<Where  <DBQueryType>>        QueryWhere    { get; protected set; } = new List<Where  <DBQueryType>>();
+    public List<WhereIn<DBQueryType>>        QueryWhereIn  { get; protected set; } = new List<WhereIn<DBQueryType>>();
+    public List<Where  <DBQueryType>>        QueryHaving   { get; protected set; } = new List<Where  <DBQueryType>>();
+    public List<Where  <DBQueryType>>        QuerySet      { get; protected set; } = new List<Where  <DBQueryType>>();
+    public List<Dictionary<string, dynamic>> QueryValues   { get; protected set; } = new List<Dictionary<string, dynamic>>();
+    public List<string>                      QueryColumns  { get; protected set; } = new List<string>                     ();
+    public FieldSelector                     QueryInto     { get; protected set; }
+    public Type                              QueryCreate   { get; protected set; }
+    public List<GroupBy>                     QueryGroup    { get; protected set; } = new List<GroupBy>();
+    public List<OrderBy>                     QueryOrder    { get; protected set; } = new List<OrderBy>();
+    public Limit                             QueryLimit    { get; protected set; }
+    public QueryType                         QueryType     { get; protected set; } = QueryType.RAW;
 
     /// <summary>
     /// Raw query string rendered as reference but not for real usage
@@ -302,6 +303,14 @@ public class Query<DBQueryType> : Renderable
         return (DBQueryType)this;
     }
     #endregion
+
+    #region Query building - Distinct
+    #endregion
+    public virtual DBQueryType Distinct(bool distinct = true) {
+        this.QueryDistinct = distinct;
+
+        return (DBQueryType) this;
+    }
 
     #region Query building - Select
     public virtual DBQueryType Select(Select<DBQueryType> select) {
