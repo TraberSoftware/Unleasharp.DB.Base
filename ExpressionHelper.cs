@@ -44,6 +44,20 @@ public static class ExpressionHelper {
         return null;
     }
 
+    public static string ExtractPropertyName<T>(Expression<Func<T, object>> columnExpression) {
+        if (columnExpression?.Body == null) {
+            return null;
+        }
+
+        var memberExpression = GetMemberExpression(columnExpression.Body);
+
+        if (memberExpression != null) {
+            return memberExpression.Member.Name;
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// Extracts the name of a class field or property from a given expression.
     /// </summary>

@@ -570,11 +570,12 @@ public class Query<DBQueryType> : Renderable
     /// <param name="expression">The property expression.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Select<T>(Expression<Func<T, object>> expression) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName    = typeof(T).GetTableName();
+        string propertyName = ExpressionHelper.ExtractPropertyName(expression);
+        string columnName   = ExpressionHelper.ExtractColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
-            MemberInfo? columnMember = typeof(T).GetMember(columnName)?.FirstOrDefault();
+            MemberInfo? columnMember = typeof(T).GetMember(propertyName)?.FirstOrDefault();
             if (columnMember != null && columnMember.IsReadableSystemColumn(this._Engine)) {
                 return this.Select(new FieldSelector {
                     Table = tableName,
@@ -690,14 +691,15 @@ public class Query<DBQueryType> : Renderable
     /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Set<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName    = typeof(T).GetTableName();
+        string propertyName = ExpressionHelper.ExtractPropertyName(expression);
+        string columnName   = ExpressionHelper.ExtractColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
-            MemberInfo? columnMember = typeof(T).GetMember(columnName)?.FirstOrDefault();
+            MemberInfo? columnMember = typeof(T).GetMember(propertyName)?.FirstOrDefault();
             if (columnMember != null && !columnMember.IsSystemColumn()) {
                 return this.Set(
-                    new FieldSelector(tableName, columnName, true),
+                    columnName,
                     value,
                     escape
                 );
