@@ -96,6 +96,11 @@ public class Query<DBQueryType> : Renderable
     public List<Where  <DBQueryType>> QuerySet             { get; protected set; } = new List<Where  <DBQueryType>>();
 
     /// <summary>
+    /// Gets the list of UNION clauses for SELECT UNION queries.
+    /// </summary>
+    public List<Union  <DBQueryType>> QueryUnion           { get; protected set; } = new List<Union  <DBQueryType>>();
+
+    /// <summary>
     /// Gets the list of value dictionaries for INSERT queries.
     /// </summary>
     public List<Dictionary<string, dynamic>> QueryValues   { get; protected set; } = new List<Dictionary<string, dynamic>>();
@@ -163,6 +168,11 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     public Query<DBQueryType> ParentQuery { get; protected set; }
 
+    /// <summary>
+    /// Gets or sets the alias to use for a union query
+    /// </summary>
+    public string QueryUnionAlias { get; protected set; }
+
     #region Constructor sugar
 
     /// <summary>
@@ -224,19 +234,22 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Reset() {
-        this.QueryDistinct = false;
-        this.QueryFrom     = new List<From  <DBQueryType>>();
-        this.QuerySelect   = new List<Select<DBQueryType>>();
-        this.QueryJoin     = new List<Join  <DBQueryType>>();
-        this.QueryWhere    = new List<Where <DBQueryType>>();
-        this.QueryHaving   = new List<Where <DBQueryType>>();
-        this.QuerySet      = new List<Where <DBQueryType>>();
-        this.QueryValues   = new List<Dictionary<string, dynamic>>();
-        this.QueryInto     = null;
-        this.QueryGroup    = new List<GroupBy>();
-        this.QueryOrder    = new List<OrderBy>();
-        this.QueryLimit    = null;
-        this.QueryType     = QueryType.RAW;
+        this.QueryDistinct   = false;
+        this.QueryFrom       = new List<From  <DBQueryType>>();
+        this.QuerySelect     = new List<Select<DBQueryType>>();
+        this.QueryJoin       = new List<Join  <DBQueryType>>();
+        this.QueryWhere      = new List<Where <DBQueryType>>();
+        this.QueryHaving     = new List<Where <DBQueryType>>();
+        this.QuerySet        = new List<Where <DBQueryType>>();
+        this.QueryUnion      = new List<Union <DBQueryType>>();
+        this.QueryValues     = new List<Dictionary<string, dynamic>>();
+        this.QueryInto       = null;
+        this.QueryGroup      = new List<GroupBy>();
+        this.QueryOrder      = new List<OrderBy>();
+        this.QueryLimit      = null;
+        this.QueryType       = QueryType.RAW;
+        this.ParentQuery     = null;
+        this.QueryUnionAlias = null;
 
         this.ResetPreparedData();
 
@@ -324,6 +337,9 @@ public class Query<DBQueryType> : Renderable
                 case QueryType.SELECT:
                     this._RenderSelectQuery();
                     break;
+                case QueryType.SELECT_UNION:
+                    this._RenderSelectUnionQuery();
+                    break;
                 case QueryType.INSERT:
                     this._RenderInsertQuery();
                     break;
@@ -374,6 +390,23 @@ public class Query<DBQueryType> : Renderable
             _RenderOrderSentence      (),
             _RenderLimitSentence      (),
             _RenderSelectExtraSentence()
+        };
+
+        QueryPreparedString = string.Join(" ", queryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
+    }
+
+    /// <summary>
+    /// Renders a SELECT UNION query.
+    /// </summary>
+    protected virtual void _RenderSelectUnionQuery() {
+        List<string> queryGroups = new List<string> {
+            _RenderSelectSentence     (),
+            _RenderUnionSentence      (),
+            _RenderWhereSentence      (),
+            _RenderGroupSentence      (),
+            _RenderHavingSentence     (),
+            _RenderOrderSentence      (),
+            _RenderLimitSentence      ()
         };
 
         QueryPreparedString = string.Join(" ", queryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
@@ -627,6 +660,96 @@ public class Query<DBQueryType> : Renderable
     }
     #endregion
 
+    #region Query building - Union
+    /// <summary>
+    /// Adds a UNION clause to the query using the specified <see cref="Union{DBQueryType}"/> object.
+    /// </summary>
+    /// <param name="union">The <see cref="Union{DBQueryType}"/> object representing the query to union.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Union(Union<DBQueryType> union) {
+        this.QueryType = QueryType.SELECT_UNION;
+        this.QueryUnion.Add(union);
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a UNION clause to the query using the specified query and union type.
+    /// </summary>
+    /// <param name="query">The query to union with the current query.</param>
+    /// <param name="type">The type of union operation (e.g., UNION, UNION ALL, INTERSECT, EXCEPT).</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Union(DBQueryType query, UnionType type = UnionType.UNION) {
+        return this.Union(new Union<DBQueryType>() {
+            Query = query,
+            Type = type
+        });
+    }
+
+    /// <summary>
+    /// Adds a UNION ALL clause to the query using the specified query.
+    /// </summary>
+    /// <param name="query">The query to union with the current query using UNION ALL.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType UnionAll(DBQueryType query) {
+        return this.Union(new Union<DBQueryType>() {
+            Query = query,
+            Type = UnionType.UNION_ALL
+        });
+    }
+
+    /// <summary>
+    /// Adds an INTERSECT clause to the query using the specified query.
+    /// </summary>
+    /// <param name="query">The query to intersect with the current query.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Intersect(DBQueryType query) {
+        return this.Union(new Union<DBQueryType>() {
+            Query = query,
+            Type = UnionType.INTERSECT
+        });
+    }
+
+    /// <summary>
+    /// Adds an EXCEPT clause to the query using the specified query.
+    /// </summary>
+    /// <param name="query">The query to except from the current query.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Except(DBQueryType query) {
+        return this.Union(new Union<DBQueryType>() {
+            Query = query,
+            Type = UnionType.EXCEPT
+        });
+    }
+
+    /// <summary>
+    /// Adds multiple UNION clauses to the query using the specified queries.
+    /// </summary>
+    /// <param name="queries">An array of queries to union with the current query.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Union(params DBQueryType[] queries) {
+        foreach (DBQueryType query in queries) {
+            this.Union(query);
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Sets an alias for the result of a UNION query and returns the updated query object.
+    /// </summary>
+    /// <remarks>Use this method to assign a specific alias to the result of a UNION query, which can be
+    /// useful when referencing the query result in subsequent operations or when working with complex
+    /// queries.</remarks>
+    /// <param name="alias">The alias to assign to the UNION query result. Cannot be null or empty.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType UnionAlias(string alias) {
+        this.QueryUnionAlias = alias;
+
+        return (DBQueryType) this;
+    }
+    #endregion
+
     #region Query building - Set
     /// <summary>
     /// Adds a SET clause for UPDATE queries.
@@ -840,6 +963,19 @@ public class Query<DBQueryType> : Renderable
     }
 
     /// <summary>
+    /// Adds a subquery as a FROM clause.
+    /// </summary>
+    /// <param name="subquery">The subquery.</param>
+    /// <param name="alias">The subquery alias.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType From(DBQueryType subquery, string alias = "") {
+        return this.From(new From<DBQueryType> {
+            Subquery   = subquery,
+            TableAlias = alias
+        });
+    }
+
+    /// <summary>
     /// Adds an INTO clause to the query.
     /// </summary>
     /// <param name="fromSentence">The INTO clause.</param>
@@ -1046,7 +1182,7 @@ public class Query<DBQueryType> : Renderable
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare.</param>
     /// <returns>The current query instance.</returns>
-    public virtual DBQueryType Where<T>(Expression<Func<T, object>> expression, dynamic value) where T : class {
+    public virtual DBQueryType Where<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = typeof(T).GetTableName();
         string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
 
@@ -1054,10 +1190,29 @@ public class Query<DBQueryType> : Renderable
             return this.Where(new FieldSelector {
                     Table  = tableName,
                     Field  = columnName,
-                    Escape = true
+                    Escape = escape
                 },
                 value
             );
+        }
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="where">The filtering condition to apply, including the field and comparison logic.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Where<T>(Expression<Func<T, object>> expression, Where<DBQueryType> where) where T : class {
+        string tableName  = typeof(T).GetTableName();
+        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            where.Field = new FieldSelector(tableName, columnName, true);
+
+            return this.Where(where);
         }
         return (DBQueryType)this;
     }
@@ -1510,21 +1665,15 @@ public class Query<DBQueryType> : Renderable
     protected virtual string _RenderWhereSentence()        { throw new NotImplementedException(); }
 
     /// <summary>
+    /// Renders the UNION sentence for the query.
+    /// </summary>
+    /// <returns>The UNION sentence string.</returns>
+    protected virtual string _RenderUnionSentence()       { throw new NotImplementedException(); }
+
+    /// <summary>
     /// Renders the GROUP BY sentence for the query.
     /// </summary>
     /// <returns>The GROUP BY sentence string.</returns>
-    protected virtual string _RenderGroupBy()              { throw new NotImplementedException(); }
-
-    /// <summary>
-    /// Renders the ORDER BY sentence for the query.
-    /// </summary>
-    /// <returns>The ORDER BY sentence string.</returns>
-    protected virtual string _RenderOrderBy()              { throw new NotImplementedException(); }
-
-    /// <summary>
-    /// Renders the GROUP sentence for the query.
-    /// </summary>
-    /// <returns>The GROUP sentence string.</returns>
     protected virtual string _RenderGroupSentence()        { throw new NotImplementedException(); }
 
     /// <summary>

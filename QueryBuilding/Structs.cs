@@ -21,6 +21,8 @@ public enum QueryType {
     // Row queries
     [Description("SELECT")]
     SELECT,
+    [Description("SELECT_UNION")]
+    SELECT_UNION,
     [Description("INSERT")]
     INSERT,
     [Description("UPDATE")]
@@ -120,6 +122,27 @@ public enum JoinDirection {
     STRAIGHT,
     [Description("CROSS")]
     CROSS
+}
+
+/// <summary>
+/// Specifies the type of UNION operation to perform between two SELECT queries.
+/// </summary>
+/// <remarks>
+/// This enumeration defines the available set operations for combining the results of multiple SELECT statements.
+/// <see cref="UNION"/> returns distinct rows from both queries, <see cref="UNION_ALL"/> returns all rows including duplicates,
+/// <see cref="INTERSECT"/> returns only rows present in both queries, and <see cref="EXCEPT"/> returns rows from the first query that are not present in the second.
+/// </remarks>
+public enum UnionType {
+    [Description("")]
+    NONE,
+    [Description("UNION")]
+    UNION,
+    [Description("UNION ALL")]
+    UNION_ALL,
+    [Description("INTERSECT")]
+    INTERSECT,
+    [Description("EXCEPT")]
+    EXCEPT
 }
 
 /// <summary>
