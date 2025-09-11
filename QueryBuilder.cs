@@ -79,6 +79,21 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public Action<DBQueryType, Exception> OnQueryExceptionAction     { get; private   set; }
 
     /// <summary>
+    /// Gets or sets the SQL query template used to begin a database transaction.
+    /// </summary>
+    protected virtual string _TransactionBeginQuery    { get; set; } = "BEGIN TRANSACTION {0};";
+
+    /// <summary>
+    /// Gets or sets the SQL query template used to commit a database transaction.
+    /// </summary>
+    protected virtual string _TransactionCommitQuery   { get; set; } = "COMMIT TRANSACTION {0}";
+
+    /// <summary>
+    /// Gets or sets the SQL query template used to roll back a database transaction.
+    /// </summary>
+    protected virtual string _TransactionRollbackQuery { get; set; } = "ROLLBACK TRANSACTION {0};";
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="QueryBuilder{QueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType}"/> class with the specified connector.
     /// </summary>
     /// <param name="connector">The database connector.</param>
