@@ -20,17 +20,33 @@ public static class ObjectExtensions {
     /// <returns>A <see cref="Dictionary{TKey, TValue}"/> where the keys are the names of the fields and properties of the
     /// object, and the values are their corresponding values. If the object has no fields or properties, an empty
     /// dictionary is returned.</returns>
+    public static Dictionary<string, dynamic> ToDynamicDictionaryForInsert(this object row) {
+        Dictionary<string, dynamic> result = new Dictionary<string, dynamic>();
+
+        Type rowType = row.GetType();
+
+        foreach (FieldInfo field in rowType.GetFields()) {
+            __HandleObjectMemberInfo(row, field, result, true);
+        }
+
+        foreach (PropertyInfo property in rowType.GetProperties()) {
+            __HandleObjectMemberInfo(row, property, result, true);
+        }
+
+        return result;
+    }
+
     public static Dictionary<string, dynamic> ToDynamicDictionary(this object row) {
         Dictionary<string, dynamic> result = new Dictionary<string, dynamic>();
 
         Type rowType = row.GetType();
 
         foreach (FieldInfo field in rowType.GetFields()) {
-            __HandleObjectMemberInfo(row, field, result);
+            __HandleObjectMemberInfo(row, field, result, false);
         }
 
         foreach (PropertyInfo property in rowType.GetProperties()) {
-            __HandleObjectMemberInfo(row, property, result);
+            __HandleObjectMemberInfo(row, property, result, false);
         }
 
         return result;
@@ -47,7 +63,7 @@ public static class ObjectExtensions {
     /// <param name="memberInfo">The metadata about the member (field or property) to be handled.</param>
     /// <param name="result">A dictionary where the database column name is used as the key, and the corresponding value from the object is
     /// added as the value.</param>
-    private static void __HandleObjectMemberInfo(object row, MemberInfo memberInfo, Dictionary<string, dynamic> result) {
+    private static void __HandleObjectMemberInfo(object row, MemberInfo memberInfo, Dictionary<string, dynamic> result, bool excludePrimaryKey = false) {
         // Disable writing to system columns
         if (memberInfo.IsSystemColumn()) {
             return;
@@ -71,7 +87,7 @@ public static class ObjectExtensions {
 
         // Don't set null values to Primary Key columns
         // HOWEVER, be careful when mixing null and not-null values of Primary Key columns in the same insert
-        if ((column != null && (column.PrimaryKey && column.NotNull)) && value == null) {
+        if (excludePrimaryKey && ((column != null && (column.PrimaryKey && column.NotNull)) && value == null)) {
             return;
         }
 
