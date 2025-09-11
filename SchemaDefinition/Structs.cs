@@ -14,5 +14,6 @@ public enum DatabaseEngine {
     MySQL,
     SQLite,
     PostgreSQL,
-    MSSQL
+    MSSQL,
+    DuckDB
 }
