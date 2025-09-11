@@ -35,6 +35,9 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     protected virtual DatabaseEngine _Engine                 { get; }
 
+    /// <summary>
+    /// Gets the prefix used for preparing query parameter names.
+    /// </summary>
     protected virtual string         _QueryPreparationPrefix { get; } = "@prepared_query_value_";
 
     #region Syntax sugar
