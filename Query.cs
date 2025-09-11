@@ -146,6 +146,16 @@ public class Query<DBQueryType> : Renderable
     public QueryType QueryType                             { get; protected set; } = QueryType.RAW;
 
     /// <summary>
+    /// Gets or set the conflict resolution strategy to be used when a conflict occurs during an INSERT.
+    /// </summary>
+    public OnInsertConflict QueryOnConflict                { get; protected set; } = OnInsertConflict.NONE;
+
+    /// <summary>
+    /// Gets the name of the key column used to resolve conflicts during INSERT operations.
+    /// </summary>
+    public string QueryOnConflictKeyColumn                 { get; protected set; } = string.Empty;
+
+    /// <summary>
     /// Raw query string rendered as reference but not for real usage.
     /// As prepared queries are not rendered as-is, this is intended to be used
     /// as reference as the translated query that will be executed, but could
@@ -252,6 +262,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryOrder      = new List<OrderBy>();
         this.QueryLimit      = null;
         this.QueryType       = QueryType.RAW;
+        this.QueryOnConflict = OnInsertConflict.NONE;
         this.ParentQuery     = null;
         this.QueryUnionAlias = null;
 
@@ -421,8 +432,9 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     protected virtual void _RenderInsertQuery() {
         List<string> queryGroups = new List<string> {
-            _RenderInsertIntoSentence  (),
-            _RenderInsertValuesSentence(),
+            _RenderInsertIntoSentence      (),
+            _RenderInsertValuesSentence    (),
+            _RenderInsertOnConflictSentence()
         };
 
         QueryPreparedString = string.Join(" ", queryGroups.Where(group => !string.IsNullOrWhiteSpace(group)));
@@ -917,6 +929,27 @@ public class Query<DBQueryType> : Renderable
             this.Value(row, skipNullValues);
         }
 
+        return (DBQueryType)this;
+    }
+    #endregion
+
+    #region Query Building - On Conflict
+    public virtual DBQueryType OnConflict(OnInsertConflict onConflict, string keyColumnName = "") {
+        this.QueryOnConflict          = onConflict;
+        this.QueryOnConflictKeyColumn = keyColumnName;
+
+        this.Touch();
+        return (DBQueryType)this;
+    }
+
+    public virtual DBQueryType OnConflict<T>(OnInsertConflict onConflict, Expression<Func<T, object>> expression) where T : class {
+        string tableName    = typeof(T).GetTableName();
+        string propertyName = ExpressionHelper.ExtractPropertyName(expression);
+        string columnName   = ExpressionHelper.ExtractColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.OnConflict(onConflict, columnName);
+        }
         return (DBQueryType)this;
     }
     #endregion
@@ -1733,6 +1766,12 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     /// <returns>The INSERT VALUES sentence string.</returns>
     protected virtual string _RenderInsertValuesSentence() { throw new NotImplementedException(); }
+
+    /// <summary>
+    /// Renders the ON CONFLICT/ON DUPLICATE KEY sentence for the query.
+    /// </summary>
+    /// <returns>The ON CONFLICT/ON DUPLICATE KEY sentence string.</returns>
+    protected virtual string _RenderInsertOnConflictSentence() { throw new NotImplementedException(); }
 
     /// <summary>
     /// Renders the CREATE sentence for the specified table type.
