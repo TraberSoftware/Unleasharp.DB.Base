@@ -860,7 +860,7 @@ public class Query<DBQueryType> : Renderable
     /// <param name="skipNullValues">Whether to skip null values.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Value<T>(T row, bool skipNullValues = false) where T : class {
-        return this.Value(row.ToDynamicDictionary());
+        return this.Value(row.ToDynamicDictionaryForInsert());
     }
 
     /// <summary>
@@ -885,7 +885,7 @@ public class Query<DBQueryType> : Renderable
     /// <param name="skipNullValues">Whether to skip null values.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Value(object row, bool skipNullValues = false) {
-        return this.Value(row.ToDynamicDictionary());
+        return this.Value(row.ToDynamicDictionaryForInsert());
     }
 
     /// <summary>
