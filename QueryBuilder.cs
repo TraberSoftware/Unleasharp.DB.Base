@@ -1775,4 +1775,94 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     #endregion
 
     #endregion
+
+    #region Transaction management
+    /// <summary>
+    /// Begins a new database transaction with the specified name.
+    /// </summary>
+    /// <remarks>This method initializes a new transaction in the database context. Ensure that any ongoing
+    /// transactions are properly committed or rolled back before starting a new one to avoid conflicts.</remarks>
+    /// <param name="transactionName">The name of the transaction. If not specified, an unnamed transaction will be started.</param>
+    /// <returns><see langword="true"/> if the transaction was successfully started; otherwise, <see langword="false"/>.</returns>
+    public virtual bool Begin(string transactionName = "") {
+        this.DBQuery.Reset();
+        this._ResetResult();
+
+        this.DBQuery.Raw(string.Format(this._TransactionBeginQuery, transactionName));
+        bool result = this.Execute<bool>();
+
+        this.DBQuery.Reset();
+        this._ResetResult();
+
+        return result;
+    }
+
+    /// <summary>
+    /// Commits the current transaction to the database.
+    /// </summary>
+    /// <remarks>This method finalizes the transaction and applies all changes made during the transaction to
+    /// the database. Ensure that the transaction is properly initialized before calling this method.</remarks>
+    /// <param name="transactionName">The name of the transaction to commit. If not specified, the default transaction is committed.</param>
+    /// <returns><see langword="true"/> if the transaction was successfully committed; otherwise, <see langword="false"/>.</returns>
+    public virtual bool Commit(string transactionName = "") {
+        this.DBQuery.Reset();
+        this._ResetResult();
+
+        this.DBQuery.Raw(string.Format(this._TransactionCommitQuery, transactionName));
+        bool result = this.Execute<bool>();
+
+        this.DBQuery.Reset();
+        this._ResetResult();
+
+        return result;
+    }
+
+    /// <summary>
+    /// Rolls back the current database transaction.
+    /// </summary>
+    /// <remarks>Use this method to undo changes made during a transaction. Ensure that the transaction name,
+    /// if provided, matches the name of an active transaction. If no transaction name is specified, the method attempts
+    /// to roll back the default transaction.</remarks>
+    /// <param name="transactionName">The name of the transaction to roll back. If not specified, the default transaction is rolled back.</param>
+    /// <returns><see langword="true"/> if the rollback operation succeeds; otherwise, <see langword="false"/>.</returns>
+    public virtual bool Rollback(string transactionName = "") {
+        this.DBQuery.Reset();
+        this._ResetResult();
+
+        this.DBQuery.Raw(string.Format(this._TransactionRollbackQuery, transactionName));
+        bool result = this.Execute<bool>();
+
+        this.DBQuery.Reset();
+        this._ResetResult();
+
+        return result;
+    }
+
+    /// <summary>
+    /// Alias for <see cref="Begin"/>. Begins a new database transaction.
+    /// </summary>
+    /// <param name="transactionName">The name of the transaction. If not specified, an unnamed transaction will be started.</param>
+    /// <returns><see langword="true"/> if the transaction was successfully started; otherwise, <see langword="false"/>.</returns>
+    public bool BeginTransaction(string transactionName = "") {
+        return this.Begin(transactionName);
+    }
+
+    /// <summary>
+    /// Alias for <see cref="Commit"/>. Commits the current database transaction.
+    /// </summary>
+    /// <param name="transactionName">The name of the transaction to commit. If not specified, the default transaction is committed.</param>
+    /// <returns><see langword="true"/> if the transaction was successfully committed; otherwise, <see langword="false"/>.</returns>
+    public bool CommitTransaction(string transactionName = "") {
+        return this.Commit(transactionName);
+    }
+
+    /// <summary>
+    /// Alias for <see cref="Rollback"/>. Rolls back the current database transaction.
+    /// </summary>
+    /// <param name="transactionName">The name of the transaction to roll back. If not specified, the default transaction is rolled back.</param>
+    /// <returns><see langword="true"/> if the rollback operation succeeds; otherwise, <see langword="false"/>.</returns>
+    public bool RollbackTransaction(string transactionName = "") {
+        return this.Rollback(transactionName);
+    }
+    #endregion
 }
