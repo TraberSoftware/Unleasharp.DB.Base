@@ -33,7 +33,9 @@ public class Query<DBQueryType> : Renderable
     /// <summary>
     /// Gets the database engine associated with this query.
     /// </summary>
-    protected virtual DatabaseEngine _Engine { get; }
+    protected virtual DatabaseEngine _Engine                 { get; }
+
+    protected virtual string         _QueryPreparationPrefix { get; } = "@prepared_query_value_";
 
     #region Syntax sugar
     /// <summary>
@@ -224,8 +226,7 @@ public class Query<DBQueryType> : Renderable
     /// <returns>The label string.</returns>
     public virtual string GetNextPreparedQueryValueLabel() {
         Query<DBQueryType> targetQuery = this.ParentQuery != null ? this.ParentQuery : this;
-        string             prefix      = "@prepared_query_value_";
-        return $"{prefix}{targetQuery.QueryPreparedData.Count}";
+        return $"{this._QueryPreparationPrefix}{targetQuery.QueryPreparedData.Count}";
     }
     #endregion
 
