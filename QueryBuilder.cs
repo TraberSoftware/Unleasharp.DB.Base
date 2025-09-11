@@ -100,7 +100,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public QueryBuilder(DBConnectorType connector) {
         this.Connector = connector;
 
-            this.DBQuery = Activator.CreateInstance<DBQueryType>();
+        this.DBQuery = Activator.CreateInstance<DBQueryType>();
     }
 
     /// <summary>
@@ -227,10 +227,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <param name="force">If true, forces execution even if results are already available.</param>
     /// <returns>The result of the query as the specified type.</returns>
     public virtual T Execute<T>(bool force = false) {
+        bool querySuccess = false;
         // Don't execute the query twice
         if (this.Result == null || force) {
             this._BeforeQueryExecution();
-            this._Execute();
+            querySuccess = this._Execute();
             this._AfterQueryExecution();
         }
 
@@ -275,8 +276,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
                 };
                 break;
             case QueryType.CREATE:
+            default:
                 result = true switch {
-                    true when typeof(T) == typeof(bool) => this.AffectedRows > 0
+                    true when typeof(T) == typeof(bool) => querySuccess
                 };
                 break;
         }
