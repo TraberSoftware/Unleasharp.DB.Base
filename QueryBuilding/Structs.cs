@@ -203,4 +203,19 @@ public enum KeyType {
     [Description("FOREIGN")]
     FOREIGN
 }
+
+/// <summary>
+/// Specifies the behavior to apply when an insert operation encounters a conflict.
+/// </summary>
+/// <remarks>This enumeration defines the possible actions that can be taken when a conflict occurs during an
+/// insert operation. Use this to control how conflicts are resolved, such as ignoring the conflict or updating existing
+/// data.</remarks>
+public enum OnInsertConflict {
+    [Description("")]
+    NONE,
+    [Description("IGNORE")]
+    IGNORE,
+    [Description("UPDATE")]
+    UPDATE
+}
 #endregion
