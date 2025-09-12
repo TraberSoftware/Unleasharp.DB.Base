@@ -1,4 +1,8 @@
-﻿# Select
+﻿---
+outline: deep
+---
+
+# Select
 
 The select operation will retrieve rows from the database based on the executed query. Depending on how you want to iterate over the data results, there are a few operations available to retrieve them.
 
@@ -9,7 +13,9 @@ The `Select()` method syntax is very simple:
  * Use `Select<TableClassType>(table => table.column)` Query Expression syntax to select a specific class property as the column to be selected
  * Use a `List<string>` as parameter to select multiple columns at once
 
-## FirstOrDefault()
+## Data Retrieval Methods
+
+### FirstOrDefault()
 Retrieves the first result of the query.
 
 ```csharp
@@ -22,7 +28,17 @@ ExampleTable row = dbConnector.QueryBuilder().Build(query => query
 ).FirstOrDefault<ExampleTable>();
 ```
 
-## AsEnumerable()
+### ToList()
+Returns a `List<T>` result of the query.
+```csharp
+List<example_table> rows = dbConnector.QueryBuilder().Build(query => query
+    .Select()
+    .From("example_table")
+    .OrderBy("id", OrderDirection.DESC)
+).ToList<example_table>();
+```
+
+### AsEnumerable()
 Returns an `IEnumerable<T>` result of the query. This method won't automatically iterate the table, but the result set retrieved by the executed query.
 
 ```csharp
@@ -35,17 +51,7 @@ foreach (ExampleTable row in dbConnector.QueryBuilder().Build(query => query
 }
 ```
 
-### ToList()
-Returns a `List<T>` result of the query.
-```csharp
-List<example_table> rows = dbConnector.QueryBuilder().Build(query => query
-    .Select()
-    .From("example_table")
-    .OrderBy("id", OrderDirection.DESC)
-).ToList<example_table>();
-```
-
-## Iterate()
+### Iterate()
 The `Iterate()` method will iterate over all rows of the table by using the provided column as the AutoIncrement ID column, for incremental retrieval. LIMIT-OFFSET could be used for this operation, but the performance quickly degrades over large results.
 
 ```csharp

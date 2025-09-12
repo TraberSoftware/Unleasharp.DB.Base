@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Joined Tables
 When performing a Join between two or more tables, the results can be either retrieved in a Tuple or in a single Class that holds all the fields retrieved by the query. The following sample class provides the syntax to define a joined table for this purpose.
 

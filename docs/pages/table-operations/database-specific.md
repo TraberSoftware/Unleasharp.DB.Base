@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Database-Specific Operations
 
 ## PostgreSQL Enum Types

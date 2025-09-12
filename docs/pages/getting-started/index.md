@@ -1,4 +1,8 @@
-﻿# Getting Started
+﻿---
+outline: deep
+---
+
+# Getting Started
 
 ## Namespace Imports
 
@@ -73,7 +77,10 @@ ConnectorManager dbConnector = new ConnectorManager("Data Source=unleasharp.db;V
 ;
 ```
 
-## Engine-Specific - PostgreSQL
+## Engine-Specific
+
+### PostgreSQL
+
 PostgreSQL requires special configuration when performing operations with Enums. In PostgreSQL, Enums can be defined as a specific type. This requires creating the Enum type first in PostgreSQL, which can be done with Unleasharp.DB, but also requires to Map first the C# Enum to the PostgreSQL Enum before creating the database connection.
 
 ```csharp

@@ -1,4 +1,8 @@
-﻿# Join
+﻿---
+outline: deep
+---
+
+# Join
 When joining multiple tables, results are not automatically mapped to a single class. You must either:
 
 1. Use a **custom `JoinedTable` class** (see [Joined Tables](../data-mapping/joined-tables.html)), or  

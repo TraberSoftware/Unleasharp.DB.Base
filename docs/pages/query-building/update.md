@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Update
 Data update can be strictly typed by using Query Expressions or very lax by using plain strings to set the column values.
 

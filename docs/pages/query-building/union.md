@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Union
 
 Union queries are supported with the following restrictions.
@@ -14,7 +18,9 @@ The following methods support union operations:
 - `Query.Except()` - Returns rows from first query not present in second
 - `Query.UnionAlias()` - Set the union alias for the current query
 
-## Simple Union
+## Examples
+
+### Simple Union
 
 ```csharp
 List<ExampleTable> unionRows = dbConnector.QueryBuilder().Build(query => query
@@ -45,7 +51,7 @@ List<ExampleTable> unionRows = dbConnector.QueryBuilder().Build(query => query
 ).ToList<ExampleTable>();
 ```
 
-## Union as Subselect
+### Union as Subselect
 
 ```csharp
 List<ExampleTable> complexUnion = dbConnector.QueryBuilder().Build(query => query

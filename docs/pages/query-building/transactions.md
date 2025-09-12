@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Transactions
 
 Transactions provide a way to execute multiple database operations as a single unit of work, ensuring data consistency and integrity. All operations within a transaction are either committed together or rolled back together if any operation fails.
@@ -32,7 +36,9 @@ else {
 }
 ```
 
-## Named transactions - MSSQL
+## MSSQL
+
+### Named Transactions
 In MSSQL, named transactions provide a way to explicitly name transaction blocks, making it easier to manage and debug complex transactional operations. When using named transactions, you can reference specific transaction names for commit or rollback operations.
 
 ```csharp

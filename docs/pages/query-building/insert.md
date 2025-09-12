@@ -1,4 +1,8 @@
-﻿# Insert
+﻿---
+outline: deep
+---
+
+# Insert
 Data insertion can be strictly typed using annotated classes or very lax by using standard classes without any special configuration. 
 
 To perform an insert, there must be a call to at least two methods:

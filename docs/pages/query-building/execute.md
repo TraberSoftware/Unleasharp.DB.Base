@@ -1,4 +1,8 @@
-﻿# Execute operation
+﻿---
+outline: deep
+---
+
+# Execute operation
 
 When performing certain database operations, the `Execute<T>()` method provides a way to execute and determine the result of the provided query in database, which depends on the query type, the actions performed in the database and the result itself.
 

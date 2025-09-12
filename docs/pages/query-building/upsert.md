@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Upsert
 
 An **upsert** (short for "insert or update") operation combines the functionality of INSERT and UPDATE operations into a single atomic operation. When inserting data into a table, if a conflict occurs due to a PRIMARY KEY or UNIQUE constraint violation, the upsert behavior determines how to handle the conflicting row.

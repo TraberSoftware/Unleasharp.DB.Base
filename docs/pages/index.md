@@ -54,6 +54,29 @@ Avoid Unleasharp.DB when you need:
 ❌ **Database Migrations** - For applications requiring migration management  
 ❌ **Entity Framework Integration** - When working within existing EF ecosystems  
 
+## Comparison With SQLKata
+The following table illustrates the strengths and weaknesses of Unleasharp.DB against the widely-used SQLKata library.
+
+
+| Feature                    | **Unleasharp.DB**                                                                                   | **SQLKata**                                                                                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------  | -------------------------------------------------------------------------------------------------- |
+| **Query Builder**          | ✅ Fluent API for building SQL queries                                                              | ✅ Fluent API for building SQL queries                                                              |
+| **Strong Typing**          | ✅ Expression-based (e.g. `movie => movie.ReleaseDate`), compile-time safety                        | ❌ String-based only, prone to typos and refactoring issues                                         |
+| **String Flexibility**     | ✅ Can mix raw SQL strings when needed                                                              | ✅ Always string-based                                                                              |
+| **Data Mapping**           | ✅ Built-in table-to-class mapping (`.ToList<User>()`, `.FirstOrDefault<Movie>()`)                  | ❌ Requires external mapper (Dapper, EF, etc.)                                                      |
+| **Execution**              | ✅ Integrated execution layer via `ConnectorManager`                                                | ❌ Query builder only — execution handled separately                                                |
+| **Multi-Database Support** | ✅ Separate packages for each database (`Unleasharp.DB.MySQL`, `.SQLite`, `.PostgreSQL`, `.MSSQL`)  | ✅ Multiple compilers (e.g. `SqlServerCompiler`, `PostgresCompiler`), configured at runtime         |
+
+And the differences in different aspects of each library:
+
+| Aspect                     | **Unleasharp.DB**                                                                                   | **SQLKata**                                                                                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------  | -------------------------------------------------------------------------------------------------- |
+| **Dependencies**           | All-in-one: build + execute + map                                                                   | Must combine with a mapper/ORM (usually Dapper)                                                      |
+| **Ecosystem & Community**  | Smaller, newer ecosystem                                                                            | Large community, widely adopted, battle-tested                                                       |
+| **Learning Curve**         | Slightly steeper (mapping + connector setup) but safer long-term                                    | Very easy (just query building)                                                                      |
+| **Use Case Fit**           | Best for teams wanting **type-safe queries, mapping, and execution in one lightweight library**     | Best for devs already using **Dapper/ORMs** who just need a flexible **query builder**               |
+
+
 ## Core Philosophy
 
 Unleasharp.DB is designed to be a lightweight, focused library that excels at one thing: building safe, efficient SQL queries. It's not trying to be a full-featured ORM but rather a powerful query builder that can work alongside other tools in your stack.

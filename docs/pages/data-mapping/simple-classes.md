@@ -1,4 +1,8 @@
-﻿# Simple classes
+﻿---
+outline: deep
+---
+
+# Simple classes
 This is the most simple way to define a database table as a class. It will be a 1:1 representation of the table:
  * The class name is the table name.
  * The field/property name is the column name.

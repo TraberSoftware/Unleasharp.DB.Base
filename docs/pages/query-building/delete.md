@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # Delete
 
 Data deletion requires to specify at least:

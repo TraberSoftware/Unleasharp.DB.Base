@@ -1,3 +1,7 @@
+---
+outline: deep
+---
+
 # ASP.Net
 ASP.NET Core compatibility is provided out of the box. The ConnectorManager class handles all connection threading and should be registered as a singleton service.
 
