@@ -4,7 +4,7 @@ import { SearchPlugin } from "vitepress-plugin-search";
 export default defineConfig({
   title: "Unleasharp.DB",
   description: "Unleasharp.DB Query Builder documentation",
-  base: "/docs/",
+  base: "/Unleasharp.DB.Base/docs/",
 
   vite: {
     plugins: [
@@ -18,7 +18,7 @@ export default defineConfig({
 
   themeConfig: {
     nav: [
-      { text: "Foundation",       link: "/foundation/"       },
+      { text: "Foundation",       link: "/"                  },
       { text: "Getting Started",  link: "/getting-started/"  },
       { text: "Data Mapping",     link: "/data-mapping/"     },
       { text: "Table Operations", link: "/table-operations/" },

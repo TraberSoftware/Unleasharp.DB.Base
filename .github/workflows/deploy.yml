@@ -45,7 +45,7 @@ jobs:
       - name: Prepare site output
         run: |
           mkdir -p out
-          cp -r pages/.vitepress/dist/* out/
+          cp -r pages/.vitepress/dist/* out/docs/
           cp index.html out/index.html
 
       - name: Upload artifact

@@ -66,9 +66,9 @@ Unleasharp.DB is designed to be a lightweight, focused library that excels at on
 
 The library provides native support for the following database engines:
 
-- **PostgreSQL** (via Npgsql)
-- **MySQL** (via MySqlConnector)
-- **SQL Server** (via Microsoft.Data.SqlClient)
-- **SQLite** (via System.Data.SQLite.Core)
+- **MySQL** (via MySqlConnector) - [Unleasharp.DB.MySQL](https://github.com/TraberSoftware/Unleasharp.DB.MySQL)
+- **SQLite** (via System.Data.SQLite.Core) - [Unleasharp.DB.SQLite](https://github.com/TraberSoftware/Unleasharp.DB.SQLite)
+- **PostgreSQL** (via Npgsql) - [Unleasharp.DB.PostgreSQL](https://github.com/TraberSoftware/Unleasharp.DB.PostgreSQL)
+- **SQL Server** (via Microsoft.Data.SqlClient) - [Unleasharp.DB.MSSQL](https://github.com/TraberSoftware/Unleasharp.DB.MSSQL)
 
 Each provider is optimized for its respective database engine while maintaining consistent API behavior across platforms.
