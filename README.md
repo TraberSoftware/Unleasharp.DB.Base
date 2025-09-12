@@ -1,7 +1,8 @@
-﻿# Unleasharp.DB.Base
+﻿# 🛠️ Unleasharp.DB.Base
 
 [![NuGet version (Unleasharp.DB.Base)](https://img.shields.io/nuget/v/Unleasharp.DB.Base.svg?style=flat-square)](https://www.nuget.org/packages/Unleasharp.DB.Base/)
-[![GitHub Wiki](https://img.shields.io/badge/Wiki-Documentation-blue)](https://github.com/TraberSoftware/Unleasharp.DB.Base/wiki)
+[![Github Pages](https://img.shields.io/badge/home-Github_Pages_-blue)](https://trabersoftware.github.io/Unleasharp.DB.Base)
+[![Documentation](https://img.shields.io/badge/dev-Documentation-blue)](https://trabersoftware.github.io/Unleasharp.DB.Base/docs/)
 
 ![Unleasharp.DB.Base](https://socialify.git.ci/TraberSoftware/Unleasharp.DB.Base/image?description=1&font=Inter&logo=https%3A%2F%2Fraw.githubusercontent.com%2FTraberSoftware%2FUnleasharp%2Frefs%2Fheads%2Fmain%2Fassets%2Flogo-small.png&name=1&owner=1&pattern=Circuit+Board&theme=Light)
 
@@ -38,8 +39,8 @@ The library follows a **CRTP (Curiously Recurring Template Pattern)** approach w
 
 ## 📖 Documentation Resources
 
-- 📚 **[GitHub Wiki](https://github.com/TraberSoftware/Unleasharp.DB.Base/wiki/1.-Home)** - Complete documentation
-- 🎯 **[Getting Started Guide](https://github.com/TraberSoftware/Unleasharp.DB.Base/wiki/2.-Getting-Started)** - Quick start guide
+- 📚 **[GitHub Pages Documentation](https://trabersoftware.github.io/Unleasharp.DB.Base/docs/)** - Complete documentation
+- 🎯 **[Getting Started Guide](https://trabersoftware.github.io/Unleasharp.DB.Base/docs/getting-started/)** - Quick start guide
 
 ## 🚀 Database Engine Implementations
 
