@@ -41,3 +41,11 @@ bld/
 msbuild.log
 msbuild.err
 msbuild.wrn
+
+# NodeJS
+node_modules/
+
+# Docs
+cache/
+dist/
+*.cmd
