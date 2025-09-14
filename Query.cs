@@ -991,11 +991,12 @@ public class Query<DBQueryType> : Renderable
     /// Adds a FROM clause for a table name.
     /// </summary>
     /// <param name="tableName">The table name.</param>
+    /// <param name="escape">Whether to escape the table name.</param>
     /// <returns>The current query instance.</returns>
-    public virtual DBQueryType From(string tableName) {
+    public virtual DBQueryType From(string tableName, bool escape = true) {
         return this.From(new From<DBQueryType> {
             Table       = tableName,
-            EscapeTable = true
+            EscapeTable = escape
         });
     }
 
