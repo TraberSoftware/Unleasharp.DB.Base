@@ -510,6 +510,62 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         this.DBQuery = originalQuery;
     }
+
+    /// <summary>
+    /// Iterates over the query results using limit-offset statements and maps each row to an object of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The type to map each row to.</typeparam>
+    /// <param name="offset">The starting offset.</param>
+    /// <param name="batchSize">The batch size for iteration.</param>
+    /// <returns>An enumerable of objects of type <typeparamref name="T"/>.</returns>
+    public virtual IEnumerable<T> IterateByOffset<T>(long offset = 0, int batchSize = 100) where T : class {
+        if (this.DBQuery.QuerySelect.Count == 0) {
+            this.DBQuery.Select<T>();
+        }
+        if (this.DBQuery.QueryFrom.Count == 0) {
+            this.DBQuery.From<T>();
+        }
+
+        foreach (DataRow row in this.IterateByOffset(offset, batchSize)) {
+            yield return row.GetObject<T>();
+        }
+    }
+
+    /// <summary>
+    /// Iterates over the query results as <see cref="DataRow"/> objects using limit-offset statements.
+    /// </summary>
+    /// <param name="offset">The starting offset.</param>
+    /// <param name="batchSize">The batch size for iteration.</param>
+    /// <returns>An enumerable of <see cref="DataRow"/> objects.</returns>
+    public virtual IEnumerable<DataRow> IterateByOffset(long offset = 0, int batchSize = 100) {
+        this.DBQuery.Select();
+
+        bool endFound = false;
+
+        DBQueryType originalQuery = this.DBQuery.DeepCopy();
+
+        while (!endFound) {
+            this._ResetResult();
+            DBQueryType cachedQuery = originalQuery.DeepCopy();
+
+            cachedQuery.Limit(batchSize, offset);
+            this.DBQuery = cachedQuery;
+
+            IEnumerable<DataRow> resultEnumerator = this.AsEnumerable();
+            if (resultEnumerator == null || !resultEnumerator.Any()) {
+                endFound = true;
+                break;
+            }
+
+            foreach (DataRow row in resultEnumerator) {
+                offset++;
+
+                yield return row;
+            }
+        }
+
+        this.DBQuery = originalQuery;
+    }
     #endregion
 
     #region Data iteration - AsEnumerable
