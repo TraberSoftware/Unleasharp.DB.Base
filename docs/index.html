@@ -432,7 +432,7 @@
 
         .database-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 25px;
         }
 
@@ -685,7 +685,7 @@
             <div class="hero-content">
                 <div class="hero-text">
                     <h1>Unleasharp.DB <span>Modern Query Building</span> for C#</h1>
-                    <p>Powerful, thread-safe database access library with fluent methods for building SQL queries in C#. Supports MySQL, SQLite, PostgreSQL, and MSSQL.</p>
+                    <p>Powerful, thread-safe database access library with fluent methods for building SQL queries in C#. Supports MySQL, SQLite, PostgreSQL, MSSQL and DuckDB.</p>
                     <div class="hero-buttons">
                         <a href="#installation" class="btn btn-primary">Install Now</a>
                         <a href="#features" class="btn btn-outline">Learn More</a>
@@ -779,6 +779,7 @@
                             <div class="database-option" data-db="mysql">MySQL</div>
                             <div class="database-option" data-db="postgresql">PostgreSQL</div>
                             <div class="database-option" data-db="mssql">MSSQL</div>
+                            <div class="database-option" data-db="duckdb">DuckDB</div>
                         </div>
                     </div>
                     <div class="installation-steps">
@@ -860,6 +861,12 @@
                     <h3>SQLite</h3>
                     <p>SQLite database support</p>
                     <div class="version">v1.7.0</div>
+                </div>
+                <div class="database-card">
+                    <i class="fas fa-database"></i>
+                    <h3>DuckDB</h3>
+                    <p>DuckDB database support</p>
+                    <div class="version">v1.7.1</div>
                 </div>
             </div>
         </div>
@@ -944,6 +951,7 @@
                         <li><a href="https://www.nuget.org/packages/Unleasharp.DB.MySQL/" target="_blank">MySQL Package</a></li>
                         <li><a href="https://www.nuget.org/packages/Unleasharp.DB.PostgreSQL/" target="_blank">PostgreSQL Package</a></li>
                         <li><a href="https://www.nuget.org/packages/Unleasharp.DB.MSSQL/" target="_blank">MSSQL Package</a></li>
+                        <li><a href="https://www.nuget.org/packages/Unleasharp.DB.DuckDB/" target="_blank">DuckDB Package</a></li>
                         <li><a href="https://www.nuget.org/packages/Unleasharp.DB/" target="_blank">Base Package</a></li>
                     </ul>
                 </div>
@@ -986,26 +994,37 @@
                     packageName = 'Unleasharp.DB.SQLite';
                     packageManagerCommand = 'Install-Package Unleasharp.DB.SQLite';
                     cliCommand = 'dotnet add package Unleasharp.DB.SQLite';
+                    packageVersion = '1.7.0';
                     break;
                 case 'mysql':
                     packageName = 'Unleasharp.DB.MySQL';
                     packageManagerCommand = 'Install-Package Unleasharp.DB.MySQL';
                     cliCommand = 'dotnet add package Unleasharp.DB.MySQL';
+                    packageVersion = '1.7.0';
                     break;
                 case 'postgresql':
                     packageName = 'Unleasharp.DB.PostgreSQL';
                     packageManagerCommand = 'Install-Package Unleasharp.DB.PostgreSQL';
                     cliCommand = 'dotnet add package Unleasharp.DB.PostgreSQL';
+                    packageVersion = '1.7.0';
                     break;
                 case 'mssql':
                     packageName = 'Unleasharp.DB.MSSQL';
                     packageManagerCommand = 'Install-Package Unleasharp.DB.MSSQL';
                     cliCommand = 'dotnet add package Unleasharp.DB.MSSQL';
+                    packageVersion = '1.7.0';
+                    break;
+                case 'duckdb':
+                    packageName = 'Unleasharp.DB.DuckDB';
+                    packageManagerCommand = 'Install-Package Unleasharp.DB.DuckDB';
+                    cliCommand = 'dotnet add package Unleasharp.DB.DuckDB';
+                    packageVersion = '1.7.1';
                     break;
                 default:
                     packageName = 'Unleasharp.DB.SQLite';
                     packageManagerCommand = 'Install-Package Unleasharp.DB.SQLite';
                     cliCommand = 'dotnet add package Unleasharp.DB.SQLite';
+                    packageVersion = '1.7.0';
             }
             
             // Update the installation steps with syntax highlighting
@@ -1031,7 +1050,7 @@
                     <div class="step-content">
                         <h4>Package Reference (Manual)</h4>
                         <p>Add to your .csproj file:</p>
-                        <code class="command">&lt;PackageReference Include="${packageName}" Version="1.7.0" /&gt;</code>
+                        <code class="command">&lt;PackageReference Include="${packageName}" Version="${packageVersion}" /&gt;</code>
                     </div>
                 </div>
             `;
@@ -1044,7 +1063,7 @@
                 <span class="comment">// Or via .NET CLI</span><br>
                 <span class="keyword">CLI&gt;</span> ${cliCommand}<br><br>
                 <span class="comment">// Or add to your .csproj</span><br>
-                <span class="keyword">&lt;PackageReference</span> <span class="function">Include</span>=<span class="string">"${packageName}"</span> <span class="function">Version</span>=<span class="string">"1.7.0"</span> <span class="keyword">/&gt;</span>
+                <span class="keyword">&lt;PackageReference</span> <span class="function">Include</span>=<span class="string">"${packageName}"</span> <span class="function">Version</span>=<span class="string">"${packageVersion}"</span> <span class="keyword">/&gt;</span>
             `;
         }
         
