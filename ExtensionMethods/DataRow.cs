@@ -132,8 +132,13 @@ public static class DataRowExtension {
                     value = Convert.ChangeType(row[rowFieldName], memberInfoType);
                 }
                 catch (Exception cex) {
-                    // We tried, but
-                    throw cex;
+                    // Handle edge cases or assing object as-is. If data types don't match, it will throw an exception on SetValue()
+                    value = true switch {
+                        true when row[rowFieldName] is DateTime && memberInfoType == typeof(DateOnly) => DateOnly.FromDateTime((DateTime)row[rowFieldName]),
+                        true when row[rowFieldName] is DateOnly && memberInfoType == typeof(DateTime) => ((DateOnly)row[rowFieldName]).ToDateTime(TimeOnly.Parse("00:00:00")),
+
+                        _ => row[rowFieldName]
+                    };
                 }
             }
         }
