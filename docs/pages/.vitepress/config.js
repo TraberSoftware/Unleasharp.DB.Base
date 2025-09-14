@@ -73,6 +73,7 @@ export default defineConfig({
             { text: "Upsert",       link: "/query-building/upsert"       },
             { text: "Delete",       link: "/query-building/delete"       },
             { text: "Transactions", link: "/query-building/transactions" },
+            { text: "DuckDB",       link: "/query-building/duckdb"       },
           ]
         }
       ]
