@@ -29,7 +29,7 @@ dbConnector.QueryBuilder().Build(query => query
 | `maxValue`     | Maximum value the sequence can produce. Use -1 to indicate no maximum (unbounded).                                      | -1 (no max) |
 | `cycle`        | If true, the sequence will wrap around to the start (or min) when reaching max; if false, it will error when exhausted. | false       |
 
-### Column Sith Sequence
+### Column With Sequence
 ```csharp
 [Table("example_table")]
 [UniqueKey (typeof(ExampleTable), nameof(ExampleTable.Id))]
