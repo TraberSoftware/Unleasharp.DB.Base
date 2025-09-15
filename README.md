@@ -44,11 +44,13 @@ The library follows a **CRTP (Curiously Recurring Template Pattern)** approach w
 
 ## 🚀 Database Engine Implementations
 
-- 🐬 **MySQL** - [Unleasharp.DB.MySQL](https://github.com/TraberSoftware/Unleasharp.DB.MySQL)
-- 💾 **SQLite** - [Unleasharp.DB.SQLite](https://github.com/TraberSoftware/Unleasharp.DB.SQLite)
-- 🐘 **PostgreSQL** - [Unleasharp.DB.PostgreSQL](https://github.com/TraberSoftware/Unleasharp.DB.PostgreSQL)
-- 📊 **MSSQL** - [Unleasharp.DB.MSSQL](https://github.com/TraberSoftware/Unleasharp.DB.MSSQL)
-- 🦆 **DuckDB** - [Unleasharp.DB.DuckDB](https://github.com/TraberSoftware/Unleasharp.DB.DuckDB)
+| Database Engine   | Unleasharp.DB Implementation
+|------------------:|----------------------------------------------------------------------------------------|
+| **MySQL**      🐬 | [Unleasharp.DB.MySQL](https://github.com/TraberSoftware/Unleasharp.DB.MySQL)           |
+| **SQLite**     💾 | [Unleasharp.DB.SQLite](https://github.com/TraberSoftware/Unleasharp.DB.SQLite)         |
+| **PostgreSQL** 🐘 | [Unleasharp.DB.PostgreSQL](https://github.com/TraberSoftware/Unleasharp.DB.PostgreSQL) |
+| **MSSQL**      📊 | [Unleasharp.DB.MSSQL](https://github.com/TraberSoftware/Unleasharp.DB.MSSQL)           |
+| **DuckDB**     🦆 | [Unleasharp.DB.DuckDB](https://github.com/TraberSoftware/Unleasharp.DB.DuckDB)         |
 
 ## 📦 Dependencies
 
