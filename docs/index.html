@@ -774,23 +774,17 @@
                     <p>Select your preferred database provider to get started with Unleasharp.DB. All packages are available on NuGet.</p>
                     <div class="database-selector">
                         <div class="selector-title">Select Database Provider:</div>
-                        <div class="database-options">
-                            <div class="database-option active" data-db="sqlite">SQLite</div>
-                            <div class="database-option" data-db="mysql">MySQL</div>
-                            <div class="database-option" data-db="postgresql">PostgreSQL</div>
-                            <div class="database-option" data-db="mssql">MSSQL</div>
-                            <div class="database-option" data-db="duckdb">DuckDB</div>
-                        </div>
+                        <div class="database-options"></div>
                     </div>
                     <div class="installation-steps">
                         <div id="installation-content">
-                            <!-- Default content for SQLite -->
+                            <!-- Default content for MySQL -->
                             <div class="step">
                                 <div class="step-number">1</div>
                                 <div class="step-content">
                                     <h4>Install via Package Manager</h4>
                                     <p>Open your Package Manager Console and run:</p>
-                                    <code>Install-Package Unleasharp.DB.SQLite</code>
+                                    <code>Install-Package Unleasharp.DB.MySQL</code>
                                 </div>
                             </div>
                             <div class="step">
@@ -798,7 +792,7 @@
                                 <div class="step-content">
                                     <h4>Install via .NET CLI</h4>
                                     <p>Run the following command in your project directory:</p>
-                                    <code>dotnet add package Unleasharp.DB.SQLite</code>
+                                    <code>dotnet add package Unleasharp.DB.MySQL</code>
                                 </div>
                             </div>
                             <div class="step">
@@ -806,7 +800,7 @@
                                 <div class="step-content">
                                     <h4>Package Reference (Manual)</h4>
                                     <p>Add to your .csproj file:</p>
-                                    <code>&lt;PackageReference Include="Unleasharp.DB.SQLite" Version="1.7.0" /&gt;</code>
+                                    <code>&lt;PackageReference Include="Unleasharp.DB.MySQL" Version="1.0.0" /&gt;</code>
                                 </div>
                             </div>
                         </div>
@@ -819,11 +813,11 @@
                         </div>
                         <div class="code-content">
                             <span class="comment">// Install via Package Manager Console</span><br>
-                            <span class="keyword">PM&gt;</span> Install-Package Unleasharp.DB.SQLite<br><br>
+                            <span class="keyword">PM&gt;</span> Install-Package Unleasharp.DB.MySQL<br><br>
                             <span class="comment">// Or via .NET CLI</span><br>
-                            <span class="keyword">CLI&gt;</span> dotnet add package Unleasharp.DB.SQLite<br><br>
+                            <span class="keyword">CLI&gt;</span> dotnet add package Unleasharp.DB.MySQL<br><br>
                             <span class="comment">// Or add to your .csproj</span><br>
-                            <span class="keyword">&lt;PackageReference</span> <span class="function">Include</span>=<span class="string">"Unleasharp.DB.SQLite"</span> <span class="function">Version</span>=<span class="string">"1.7.0"</span> <span class="keyword">/&gt;</span>
+                            <span class="keyword">&lt;PackageReference</span> <span class="function">Include</span>=<span class="string">"Unleasharp.DB.MySQL"</span> <span class="function">Version</span>=<span class="string">"1.0.0"</span> <span class="keyword">/&gt;</span>
                         </div>
                     </div>
                 </div>
@@ -838,36 +832,6 @@
                 <p>Unleasharp.DB comes with dedicated packages for all major database systems</p>
             </div>
             <div class="database-grid">
-                <div class="database-card">
-                    <i class="fab fa-microsoft"></i>
-                    <h3>MSSQL</h3>
-                    <p>Microsoft SQL Server support</p>
-                    <div class="version">v1.7.0</div>
-                </div>
-                <div class="database-card">
-                    <i class="fas fa-database"></i>
-                    <h3>MySQL</h3>
-                    <p>MySQL database support</p>
-                    <div class="version">v1.7.0</div>
-                </div>
-                <div class="database-card">
-                    <i class="fas fa-database"></i>
-                    <h3>PostgreSQL</h3>
-                    <p>PostgreSQL database support</p>
-                    <div class="version">v1.7.0</div>
-                </div>
-                <div class="database-card">
-                    <i class="fas fa-database"></i>
-                    <h3>SQLite</h3>
-                    <p>SQLite database support</p>
-                    <div class="version">v1.7.0</div>
-                </div>
-                <div class="database-card">
-                    <i class="fas fa-database"></i>
-                    <h3>DuckDB</h3>
-                    <p>DuckDB database support</p>
-                    <div class="version">v1.7.1</div>
-                </div>
             </div>
         </div>
     </section>
@@ -946,20 +910,13 @@
                 </div>
                 <div class="footer-column">
                     <h3>Package Information</h3>
-                    <ul class="footer-links">
-                        <li><a href="https://www.nuget.org/packages/Unleasharp.DB.SQLite/" target="_blank">SQLite Package</a></li>
-                        <li><a href="https://www.nuget.org/packages/Unleasharp.DB.MySQL/" target="_blank">MySQL Package</a></li>
-                        <li><a href="https://www.nuget.org/packages/Unleasharp.DB.PostgreSQL/" target="_blank">PostgreSQL Package</a></li>
-                        <li><a href="https://www.nuget.org/packages/Unleasharp.DB.MSSQL/" target="_blank">MSSQL Package</a></li>
-                        <li><a href="https://www.nuget.org/packages/Unleasharp.DB.DuckDB/" target="_blank">DuckDB Package</a></li>
-                        <li><a href="https://www.nuget.org/packages/Unleasharp.DB/" target="_blank">Base Package</a></li>
+                    <ul class="footer-links" id="package-footer-links">
                     </ul>
                 </div>
                 <div class="footer-column">
                     <h3>Community</h3>
                     <ul class="footer-links">
                         <li><a href="https://github.com/TraberSoftware/Unleasharp.DB.Base/issues" target="_blank">Report Issues</a></li>
-                        <li><a href="https://github.com/TraberSoftware/Unleasharp.DB.Base/wiki" target="_blank">Wiki</a></li>
                         <li><a href="https://github.com/TraberSoftware/Unleasharp.DB.Base/blob/main/LICENSE.md" target="_blank">License</a></li>
                     </ul>
                 </div>
@@ -970,62 +927,139 @@
         </div>
     </footer>
     <script>
-        // Database selector functionality
-        document.querySelectorAll('.database-option').forEach(option => {
-            option.addEventListener('click', function() {
-                // Remove active class from all options
-                document.querySelectorAll('.database-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-                // Add active class to clicked option
-                this.classList.add('active');
-                // Get selected database
-                const db = this.getAttribute('data-db');
-                // Update installation content based on selection
-                updateInstallationContent(db);
+        const packages = [
+            {
+                'name': 'MySQL',
+                'icon': 'fas fa-database',
+                'version': '1.0'
+            },
+            {
+                'name': 'SQLite',
+                'icon': 'fas fa-database',
+                'version': '1.0'
+            },
+            {
+                'name': 'PostgreSQL',
+                'icon': 'fas fa-database',
+                'version': '1.0'
+            },
+            {
+                'name': 'MSSQL',
+                'icon': 'fab fa-microsoft',
+                'version': '1.0'
+            },
+            {
+                'name': 'DuckDB',
+                'icon': 'fas fa-database',
+                'version': '1.0'
+            }
+        ];
+
+        async function getLatestNugetVersion(packageId, { includePrerelease = false } = {}) {
+            if (!packageId) throw new Error("packageId is required");
+
+            const pkg = packageId.toLowerCase();
+            const url = `https://api.nuget.org/v3-flatcontainer/${pkg}/index.json`;
+
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                throw new Error(`Failed to fetch versions for ${packageId}: ${resp.status} ${resp.statusText}`);
+            }
+
+            const data = await resp.json();
+            if (!data.versions || !Array.isArray(data.versions)) {
+                throw new Error(`Unexpected response structure for ${packageId}`);
+            }
+
+            let versions = data.versions;
+
+            if (!includePrerelease) {
+                // filter out versions with prerelease suffix
+                versions = versions.filter(v => !/[0-9]+-[^/]+/.test(v));
+                // simpler regex: picks up hyphen after patch (e.g. "1.2.3-beta")
+                // Note: you can improve this to better detect semver prerelease parts
+            }
+
+            if (versions.length === 0) {
+                throw new Error(`No versions found${includePrerelease ? "" : " (stable versions)"} for ${packageId}`);
+            }
+
+            // Sort versions semantically
+            versions.sort((a, b) => {
+                // simple semver comparison
+                const pa = a.split(/[-+]/)[0].split('.');
+                const pb = b.split(/[-+]/)[0].split('.');
+                for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+                    const na = parseInt(pa[i] || '0', 10);
+                    const nb = parseInt(pb[i] || '0', 10);
+                    if (na > nb) return -1;
+                    if (na < nb) return 1;
+                }
+                // if reach here, they are equal in major.minor.patch
+                // to decide among prereleases (if included) you could add logic here
+                return 0;
             });
+
+            return versions[0];
+        }
+
+        async function loadPackages() {
+            const promises = packages.map(async (pkg, index) => {
+                const packageVersion = await getLatestNugetVersion('Unleasharp.DB.' + pkg.name);
+                packages[index].version = packageVersion;
+            });
+            await Promise.all(promises);
+        }
+
+        loadPackages().then(() => {
+            packages.forEach((package, index) => {
+                const packageCard = `<div class="database-card">
+                    <i class="%icon%"></i>
+                    <h3>%name%</h3>
+                    <p>%name% database support</p>
+                    <div class="version">v%version%</div>
+                </div>`.replaceAll('%name%', package.name).replaceAll('%version%', package.version).replaceAll('%icon%', package.icon);
+                const packagesCardsContainer = document.querySelector('div.database-grid');
+                packagesCardsContainer.innerHTML = packagesCardsContainer.innerHTML + packageCard;
+
+                const footerLink = `<li><a href="https://www.nuget.org/packages/Unleasharp.DB.%name%/" target="_blank">%name% Package</a></li>`.replaceAll('%name%', package.name);
+                const footerLinksElement = document.getElementById('package-footer-links');
+                footerLinksElement.innerHTML = footerLinksElement.innerHTML + footerLink;
+
+                const databaseOption = `<div class="database-option" data-db="%name%">%name%</div>`.replaceAll('%name%', package.name);
+                const databaseOptionsElement = document.querySelector('div.database-options');
+                databaseOptionsElement.innerHTML = databaseOptionsElement.innerHTML + databaseOption;
+            });
+
+            // Database selector functionality
+            document.querySelectorAll('.database-option').forEach(option => {
+                option.addEventListener('click', function () {
+                    // Remove active class from all options
+                    document.querySelectorAll('.database-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    // Add active class to clicked option
+                    this.classList.add('active');
+                    // Get selected database
+                    const db = this.getAttribute('data-db');
+                    // Update installation content based on selection
+                    updateInstallationContent(db);
+                });
+            });
+
+            document.querySelectorAll('.database-option')[0].click();
         });
         
         function updateInstallationContent(db) {
             const contentElement = document.getElementById('installation-content');
-            let packageName, packageManagerCommand, cliCommand;
-            switch(db) {
-                case 'sqlite':
-                    packageName = 'Unleasharp.DB.SQLite';
-                    packageManagerCommand = 'Install-Package Unleasharp.DB.SQLite';
-                    cliCommand = 'dotnet add package Unleasharp.DB.SQLite';
-                    packageVersion = '1.7.0';
-                    break;
-                case 'mysql':
-                    packageName = 'Unleasharp.DB.MySQL';
-                    packageManagerCommand = 'Install-Package Unleasharp.DB.MySQL';
-                    cliCommand = 'dotnet add package Unleasharp.DB.MySQL';
-                    packageVersion = '1.7.0';
-                    break;
-                case 'postgresql':
-                    packageName = 'Unleasharp.DB.PostgreSQL';
-                    packageManagerCommand = 'Install-Package Unleasharp.DB.PostgreSQL';
-                    cliCommand = 'dotnet add package Unleasharp.DB.PostgreSQL';
-                    packageVersion = '1.7.0';
-                    break;
-                case 'mssql':
-                    packageName = 'Unleasharp.DB.MSSQL';
-                    packageManagerCommand = 'Install-Package Unleasharp.DB.MSSQL';
-                    cliCommand = 'dotnet add package Unleasharp.DB.MSSQL';
-                    packageVersion = '1.7.0';
-                    break;
-                case 'duckdb':
-                    packageName = 'Unleasharp.DB.DuckDB';
-                    packageManagerCommand = 'Install-Package Unleasharp.DB.DuckDB';
-                    cliCommand = 'dotnet add package Unleasharp.DB.DuckDB';
-                    packageVersion = '1.7.1';
-                    break;
-                default:
-                    packageName = 'Unleasharp.DB.SQLite';
-                    packageManagerCommand = 'Install-Package Unleasharp.DB.SQLite';
-                    cliCommand = 'dotnet add package Unleasharp.DB.SQLite';
-                    packageVersion = '1.7.0';
-            }
+            let packageName           = "Unleasharp.DB." + db;
+            let packageManagerCommand = "Install-Package Unleasharp.DB." + db;
+            let cliCommand            = "dotnet add package Unleasharp.DB." + db;
+            let packageVersion        = packages.filter(package => package.name == db)[0].version;
+
+            getLatestNugetVersion(packageName)
+                .then(v => version = v)
+            ;
             
             // Update the installation steps with syntax highlighting
             contentElement.innerHTML = `
@@ -1033,7 +1067,7 @@
                     <div class="step-number">1</div>
                     <div class="step-content">
                         <h4>Install via Package Manager</h4>
-                        <p>Open your Package Manager Console and run:</p>
+                        <p>Open your Package Manager Console and run:</p>1
                         <code class="command">${packageManagerCommand}</code>
                     </div>
                 </div>
