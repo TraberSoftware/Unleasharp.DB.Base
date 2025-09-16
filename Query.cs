@@ -1219,6 +1219,7 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Where<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = typeof(T).GetTableName();
@@ -1227,6 +1228,29 @@ public class Query<DBQueryType> : Renderable
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new FieldSelector {
                     Table  = tableName,
+                    Field  = columnName,
+                    Escape = escape
+                },
+                value
+            );
+        }
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Where<T>(string columnName, dynamic value, bool escape = true) where T : class {
+        columnName = typeof(T).GetColumnName(columnName);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new FieldSelector {
                     Field  = columnName,
                     Escape = escape
                 },
