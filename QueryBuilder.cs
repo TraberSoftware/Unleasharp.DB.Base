@@ -29,7 +29,7 @@ namespace Unleasharp.DB.Base;
 public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType>
     where DBConnectionType        : DbConnection
     where DBConnectorSettingsType : DbConnectionStringBuilder
-    where DBConnectorType         : Connector<DBConnectorType, DBConnectorSettingsType>
+    where DBConnectorType         : Connector<DBConnectorType, DBConnectionType, DBConnectorSettingsType>
     where DBQueryType             : Query<DBQueryType>
     where QueryBuilderType        : QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType>
 {

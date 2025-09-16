@@ -14,10 +14,10 @@ namespace Unleasharp.DB.Base;
 /// </summary>
 /// <typeparam name="DBConnectorType">The Type of the DB Connector to spawn connections of</typeparam>
 public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnectorSettingsType, DBConnectionType, DBQueryBuilderType, DBQueryType> 
-    where DBConnectorType         : Connector<DBConnectorType, DBConnectorSettingsType>
-    where DBConnectorSettingsType : DbConnectionStringBuilder
-    where DBConnectorManagerType  : ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnectorSettingsType, DBConnectionType, DBQueryBuilderType, DBQueryType>
     where DBConnectionType        : DbConnection
+    where DBConnectorSettingsType : DbConnectionStringBuilder
+    where DBConnectorType         : Connector<DBConnectorType, DBConnectionType, DBConnectorSettingsType>
+    where DBConnectorManagerType  : ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnectorSettingsType, DBConnectionType, DBQueryBuilderType, DBQueryType>
     where DBQueryBuilderType      : QueryBuilder<DBQueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType>
     where DBQueryType             : Query<DBQueryType>
 {
@@ -298,7 +298,7 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     /// </summary>
     /// <typeparam name="DBType">DB Connector Type.</typeparam>
     /// <param name="dbConnector">The DBConnector to initialize.</param>
-    public void __Initialize<DBType>(DBType dbConnector) where DBType : Unleasharp.DB.Base.Connector<DBType, DBConnectorSettingsType> {
+    public void __Initialize<DBType>(DBType dbConnector) where DBType : Unleasharp.DB.Base.Connector<DBType, DBConnectionType, DBConnectorSettingsType> {
         bool force = (this.AutomaticConnectionRenewal && this.AutomaticConnectionRenewalInterval.TotalMilliseconds > 0)
             ? DateTime.UtcNow - dbConnector.ConnectionTimestamp >= this.AutomaticConnectionRenewalInterval
             : false
