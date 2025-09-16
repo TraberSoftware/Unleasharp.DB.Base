@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# Data Mapping
+# 🗺️ Data Mapping
 One of the basics to start performing operations with the database is mapping the data. Unleasharp.DB handles data serialization to C# classes, but requires to setup previously the data structure of the classes for a better mapping.
 
 # Fields vs Properties

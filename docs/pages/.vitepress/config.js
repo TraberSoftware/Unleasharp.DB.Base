@@ -1,4 +1,4 @@
-import { defineConfig } from "vitepress";
+﻿import { defineConfig } from "vitepress";
 import { SearchPlugin } from "vitepress-plugin-search";
 
 export default defineConfig({
@@ -17,12 +17,13 @@ export default defineConfig({
   },
 
   themeConfig: {
+    logo: '/img/logo-tiny.png',
     nav: [
-      { text: "Foundation",       link: "/"                  },
-      { text: "Getting Started",  link: "/getting-started/"  },
-      { text: "Data Mapping",     link: "/data-mapping/"     },
-      { text: "Table Operations", link: "/table-operations/" },
-      { text: "Query Building",   link: "/query-building/"   }
+      { text: "🏛️ Foundation",       link: "/"                  },
+      { text: "🚀 Getting Started",  link: "/getting-started/"  },
+      { text: "🗺️ Data Mapping",     link: "/data-mapping/"     },
+      { text: "📋 Table Operations", link: "/table-operations/" },
+      { text: "🔍 Query Building",   link: "/query-building/"   }
     ],
     sidebar: {
       "/getting-started/": [

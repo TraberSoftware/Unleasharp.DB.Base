@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# Query Building
+# 🔍 Query Building
 The core and pride of the Unleasharp.DB library is the Query Builder and the Query class. These classes work together to provide database-agnostic functionality while also providing query-execution, data iteration and serialization.
 
 ## Syntax Overview

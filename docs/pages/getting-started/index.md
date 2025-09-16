@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# Getting Started
+# 🚀 Getting Started
 
 ## Namespace Imports
 
