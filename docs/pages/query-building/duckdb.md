@@ -150,7 +150,7 @@ var readCSVFunction = new Unleasharp.DB.DuckDB.Functions.ReadCSVFunction {
     }
 };
 
-List<T> duckdbRows = duckdb.QueryBuilder().Build(query => query
+List<Flights> csvFlights = dbConnector.QueryBuilder().Build(query => query
     .Select()
     .From(readCSVFunction)
-).ToList<T>();
+).ToList<Flights>();
