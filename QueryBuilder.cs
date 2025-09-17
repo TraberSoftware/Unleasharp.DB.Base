@@ -41,6 +41,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// Gets the database query instance used by this query builder.
     /// </summary>
     public DBQueryType     DBQuery      { get; private set;   }
+    /// <summary>
+    /// Gets the last executed database query instance.
+    /// </summary>
+    public DBQueryType     LastQuery    { get; private set;   }
 
     #region Query result data
     /// <summary>
@@ -174,9 +178,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         if (this.Result != null && this.Result.Rows.Count > 0 && this.Result.Columns.Count > 0) {
             this.ScalarValue = this.Result.Rows[0][0];
         }
+        this.LastQuery = this.DBQuery.DeepCopy();
+        this.DBQuery   = Activator.CreateInstance<DBQueryType>();
 
         if (this.AfterQueryExecutionAction != null) {
-            this.AfterQueryExecutionAction.Invoke(this.DBQuery);
+            this.AfterQueryExecutionAction.Invoke(this.LastQuery);
         }
     }
 
@@ -209,13 +215,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <param name="force">If true, forces execution even if results are already available.</param>
     /// <returns>The current query builder instance.</returns>
-    public virtual QueryBuilderType Execute(bool force = false) {
-        // Don't execute the query twice
-        if (this.Result == null || force) {
-            this._BeforeQueryExecution();
-            this._Execute();
-            this._AfterQueryExecution();
-        }
+    public virtual QueryBuilderType Execute() {
+        this._BeforeQueryExecution();
+        this._Execute();
+        this._AfterQueryExecution();
 
         return (QueryBuilderType) this;
     }
@@ -226,14 +229,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type of the result to return.</typeparam>
     /// <param name="force">If true, forces execution even if results are already available.</param>
     /// <returns>The result of the query as the specified type.</returns>
-    public virtual T Execute<T>(bool force = false) {
-        bool querySuccess = false;
-        // Don't execute the query twice
-        if (this.Result == null || force) {
-            this._BeforeQueryExecution();
-            querySuccess = this._Execute();
-            this._AfterQueryExecution();
-        }
+    public virtual T Execute<T>() {
+        this._BeforeQueryExecution();
+        bool querySuccess = this._Execute();
+        this._AfterQueryExecution();
 
         object? result = null;
         switch (this.DBQuery.QueryType) {
@@ -295,18 +294,13 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type of the scalar value to return.</typeparam>
     /// <param name="force">If true, forces execution even if results are already available.</param>
     /// <returns>The scalar value of the query as the specified type.</returns>
-    public virtual T ExecuteScalar<T>(bool force = false) {
-        // Don't execute the query twice
-        if (this.Result == null || force) {
-            this._BeforeQueryExecution();
-            T scalarValue = this._ExecuteScalar<T>();
-            this._AfterQueryExecution();
+    public virtual T ExecuteScalar<T>() {
+        this._BeforeQueryExecution();
+        T scalarValue = this._ExecuteScalar<T>();
+        this._AfterQueryExecution();
 
-            this.ScalarValue = scalarValue;
-            return scalarValue;
-        }
-
-        return default(T);
+        this.ScalarValue = scalarValue;
+        return scalarValue;
     }
 
     /// <summary>
@@ -314,13 +308,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <param name="force">If true, forces execution even if results are already available.</param>
     /// <returns>A task representing the asynchronous operation, with the current query builder instance as the result.</returns>
-    public virtual async Task<QueryBuilderType> ExecuteAsync(bool force = false) {
-        // Don't execute the query twice
-        if (this.Result == null || force) {
-            this._BeforeQueryExecution();
-            await this._ExecuteAsync();
-            this._AfterQueryExecution();
-        }
+    public virtual async Task<QueryBuilderType> ExecuteAsync() {
+        this._BeforeQueryExecution();
+        await this._ExecuteAsync();
+        this._AfterQueryExecution();
 
         return (QueryBuilderType)this;
     }
