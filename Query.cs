@@ -1243,9 +1243,10 @@ public class Query<DBQueryType> : Renderable
             return this.Where(new FieldSelector {
                     Table  = tableName,
                     Field  = columnName,
-                    Escape = escape
+                    Escape = true
                 },
-                value
+                value,
+                escape
             );
         }
         return (DBQueryType)this;
@@ -1294,16 +1295,774 @@ public class Query<DBQueryType> : Renderable
     }
 
     /// <summary>
+    /// Adds a WHERE clause for a property using expressions.
+    /// </summary>
+    /// <typeparam name="TLeft">The table type for the left side of the comparison.</typeparam>
+    /// <typeparam name="TRight">The table type for the right side of the comparison.</typeparam>
+    /// <param name="expressionLeft">The property expression for the left side of the comparison.</param>
+    /// <param name="expressionRight">The property expression for the right side of the comparison.</param>
+    /// <param name="where">The filtering condition to apply, including the field and comparison logic.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Where<TLeft, TRight>(Expression<Func<TLeft, object>> expressionLeft, Expression<Func<TRight, object>> expressionRight)
+        where TLeft  : class
+        where TRight : class
+    {
+        string leftTableName   = ReflectionCache.GetTableName<TLeft>();
+        string leftColumnName  = ReflectionCache.GetColumnName<TLeft>(expressionLeft);
+        string rightTableName  = ReflectionCache.GetTableName<TRight>();
+        string rightColumnName = ReflectionCache.GetColumnName<TRight>(expressionRight);
+
+        if (
+            !string.IsNullOrWhiteSpace(leftColumnName) &&
+            !string.IsNullOrWhiteSpace(rightColumnName)
+        ) {
+            return this.Where(
+                new FieldSelector {
+                    Table = leftTableName,
+                    Field = leftColumnName
+                },
+                new FieldSelector {
+                    Table = rightTableName,
+                    Field = rightColumnName
+                }
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
     /// Adds a WHERE clause comparing two field selectors.
     /// </summary>
     /// <param name="left">The left field selector.</param>
     /// <param name="right">The right field selector.</param>
     /// <returns>The current query instance.</returns>
-    public virtual DBQueryType Where(FieldSelector left, FieldSelector right) {
+    public virtual DBQueryType Where(FieldSelector left, FieldSelector right, WhereComparer comparer = WhereComparer.EQUALS) {
         return this.Where(new Where<DBQueryType> {
             Field      = left,
-            ValueField = right
+            ValueField = right,
+            Comparer   = comparer
         });
+    }
+
+    #region Query Building - Where Greater
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the GREATER THAN comparer.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreater<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.GREATER,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the GREATER THAN comparer.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreater<T>(Expression<Func<T, object>> expression, Query<DBQueryType> subquery) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.GREATER,
+                Subquery    = subquery
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using expressions and the GREATER THAN comparer.
+    /// </summary>
+    /// <typeparam name="TLeft">The table type for the left side of the comparison.</typeparam>
+    /// <typeparam name="TRight">The table type for the right side of the comparison.</typeparam>
+    /// <param name="expressionLeft">The property expression for the left side of the comparison.</param>
+    /// <param name="expressionRight">The property expression for the right side of the comparison.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreater<TLeft, TRight>(Expression<Func<TLeft, object>> expressionLeft, Expression<Func<TRight, object>> expressionRight)
+        where TLeft  : class
+        where TRight : class
+    {
+        string leftTableName   = ReflectionCache.GetTableName<TLeft>();
+        string leftColumnName  = ReflectionCache.GetColumnName<TLeft>(expressionLeft);
+        string rightTableName  = ReflectionCache.GetTableName<TRight>();
+        string rightColumnName = ReflectionCache.GetColumnName<TRight>(expressionRight);
+
+        if (
+            !string.IsNullOrWhiteSpace(leftColumnName) &&
+            !string.IsNullOrWhiteSpace(rightColumnName)
+        ) {
+            return this.Where(
+                new FieldSelector {
+                    Table = leftTableName,
+                    Field = leftColumnName
+                },
+                new FieldSelector {
+                    Table = rightTableName,
+                    Field = rightColumnName
+                },
+                WhereComparer.GREATER
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the GREATER THAN comparer.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreater<T>(string columnName, dynamic value, bool escape = true) where T : class {
+        columnName = ReflectionCache.GetColumnName<T>(columnName);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.GREATER,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+    #endregion
+
+    #region Query Building - Where GreaterEquals
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the GREATER OR EQUAL comparer.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreaterEquals<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.GREATER_EQUALS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the GREATER OR EQUAL comparer.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreaterEquals<T>(Expression<Func<T, object>> expression, Query<DBQueryType> subquery) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.GREATER_EQUALS,
+                Subquery    = subquery
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using expressions and the GREATER OR EQUAL comparer.
+    /// </summary>
+    /// <typeparam name="TLeft">The table type for the left side of the comparison.</typeparam>
+    /// <typeparam name="TRight">The table type for the right side of the comparison.</typeparam>
+    /// <param name="expressionLeft">The property expression for the left side of the comparison.</param>
+    /// <param name="expressionRight">The property expression for the right side of the comparison.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreaterEquals<TLeft, TRight>(Expression<Func<TLeft, object>> expressionLeft, Expression<Func<TRight, object>> expressionRight)
+        where TLeft  : class
+        where TRight : class
+    {
+        string leftTableName   = ReflectionCache.GetTableName<TLeft>();
+        string leftColumnName  = ReflectionCache.GetColumnName<TLeft>(expressionLeft);
+        string rightTableName  = ReflectionCache.GetTableName<TRight>();
+        string rightColumnName = ReflectionCache.GetColumnName<TRight>(expressionRight);
+
+        if (
+            !string.IsNullOrWhiteSpace(leftColumnName) &&
+            !string.IsNullOrWhiteSpace(rightColumnName)
+        ) {
+            return this.Where(
+                new FieldSelector {
+                    Table = leftTableName,
+                    Field = leftColumnName
+                },
+                new FieldSelector {
+                    Table = rightTableName,
+                    Field = rightColumnName
+                },
+                WhereComparer.GREATER_EQUALS
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the GREATER OR EQUAL comparer.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreaterEquals<T>(string columnName, dynamic value, bool escape = true) where T : class {
+        columnName = ReflectionCache.GetColumnName<T>(columnName);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.GREATER_EQUALS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+    #endregion
+
+    #region Query Building - Where Lower
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the LOWER THAN comparer.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLower<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.LOWER,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the LOWER THAN comparer.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLower<T>(Expression<Func<T, object>> expression, Query<DBQueryType> subquery) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.LOWER,
+                Subquery    = subquery
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using expressions and the LOWER THAN comparer.
+    /// </summary>
+    /// <typeparam name="TLeft">The table type for the left side of the comparison.</typeparam>
+    /// <typeparam name="TRight">The table type for the right side of the comparison.</typeparam>
+    /// <param name="expressionLeft">The property expression for the left side of the comparison.</param>
+    /// <param name="expressionRight">The property expression for the right side of the comparison.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLower<TLeft, TRight>(Expression<Func<TLeft, object>> expressionLeft, Expression<Func<TRight, object>> expressionRight)
+        where TLeft  : class
+        where TRight : class
+    {
+        string leftTableName   = ReflectionCache.GetTableName<TLeft>();
+        string leftColumnName  = ReflectionCache.GetColumnName<TLeft>(expressionLeft);
+        string rightTableName  = ReflectionCache.GetTableName<TRight>();
+        string rightColumnName = ReflectionCache.GetColumnName<TRight>(expressionRight);
+
+        if (
+            !string.IsNullOrWhiteSpace(leftColumnName) &&
+            !string.IsNullOrWhiteSpace(rightColumnName)
+        ) {
+            return this.Where(
+                new FieldSelector {
+                    Table = leftTableName,
+                    Field = leftColumnName
+                },
+                new FieldSelector {
+                    Table = rightTableName,
+                    Field = rightColumnName
+                },
+                WhereComparer.LOWER
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the LOWER comparer.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLower<T>(string columnName, dynamic value, bool escape = true) where T : class {
+        columnName = ReflectionCache.GetColumnName<T>(columnName);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.LOWER,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+    #endregion
+
+    #region Query Building - Where LowerEquals
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the LOWER OR EQUAL comparer.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLowerEquals<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.LOWER_EQUALS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the LOWER OR EQUAL comparer.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLowerEquals<T>(Expression<Func<T, object>> expression, Query<DBQueryType> subquery) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.LOWER_EQUALS,
+                Subquery    = subquery
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using expressions and the LOWER OR EQUAL comparer.
+    /// </summary>
+    /// <typeparam name="TLeft">The table type for the left side of the comparison.</typeparam>
+    /// <typeparam name="TRight">The table type for the right side of the comparison.</typeparam>
+    /// <param name="expressionLeft">The property expression for the left side of the comparison.</param>
+    /// <param name="expressionRight">The property expression for the right side of the comparison.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLowerEquals<TLeft, TRight>(Expression<Func<TLeft, object>> expressionLeft, Expression<Func<TRight, object>> expressionRight)
+        where TLeft  : class
+        where TRight : class
+    {
+        string leftTableName   = ReflectionCache.GetTableName<TLeft>();
+        string leftColumnName  = ReflectionCache.GetColumnName<TLeft>(expressionLeft);
+        string rightTableName  = ReflectionCache.GetTableName<TRight>();
+        string rightColumnName = ReflectionCache.GetColumnName<TRight>(expressionRight);
+
+        if (
+            !string.IsNullOrWhiteSpace(leftColumnName) &&
+            !string.IsNullOrWhiteSpace(rightColumnName)
+        ) {
+            return this.Where(
+                new FieldSelector {
+                    Table = leftTableName,
+                    Field = leftColumnName
+                },
+                new FieldSelector {
+                    Table = rightTableName,
+                    Field = rightColumnName
+                },
+                WhereComparer.LOWER_EQUALS
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the LOWER OR EQUAL comparer.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLowerEquals<T>(string columnName, dynamic value, bool escape = true) where T : class {
+        columnName = ReflectionCache.GetColumnName<T>(columnName);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.LOWER_EQUALS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+    #endregion
+
+    #region Query Building - Where Is
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the IS comparer (e.g., IS NULL, IS TRUE).
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="value">The value to compare (e.g., null or boolean).</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIs<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.IS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the IS comparer (e.g., IS NULL, IS TRUE).
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIs<T>(Expression<Func<T, object>> expression, Query<DBQueryType> subquery) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.IS,
+                Subquery    = subquery
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using expressions and the IS comparer (e.g., IS NULL, IS TRUE).
+    /// </summary>
+    /// <typeparam name="TLeft">The table type for the left side of the comparison.</typeparam>
+    /// <typeparam name="TRight">The table type for the right side of the comparison.</typeparam>
+    /// <param name="expressionLeft">The property expression for the left side of the comparison.</param>
+    /// <param name="expressionRight">The property expression for the right side of the comparison.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIs<TLeft, TRight>(Expression<Func<TLeft, object>> expressionLeft, Expression<Func<TRight, object>> expressionRight)
+        where TLeft  : class
+        where TRight : class
+    {
+        string leftTableName   = ReflectionCache.GetTableName<TLeft>();
+        string leftColumnName  = ReflectionCache.GetColumnName<TLeft>(expressionLeft);
+        string rightTableName  = ReflectionCache.GetTableName<TRight>();
+        string rightColumnName = ReflectionCache.GetColumnName<TRight>(expressionRight);
+
+        if (
+            !string.IsNullOrWhiteSpace(leftColumnName) &&
+            !string.IsNullOrWhiteSpace(rightColumnName)
+        ) {
+            return this.Where(
+                new FieldSelector {
+                    Table = leftTableName,
+                    Field = leftColumnName
+                },
+                new FieldSelector {
+                    Table = rightTableName,
+                    Field = rightColumnName
+                },
+                WhereComparer.IS
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the IS comparer (e.g., IS NULL, IS TRUE).
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare (e.g., null or boolean).</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIs<T>(string columnName, dynamic value, bool escape = true) where T : class {
+        columnName = ReflectionCache.GetColumnName<T>(columnName);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.IS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+    #endregion
+
+    #region Query Building - Where IsNot
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the IS NOT comparer (e.g., IS NOT NULL).
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="value">The value to compare (e.g., null or boolean).</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIsNot<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.IS_NOT,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using an expression and the IS NOT comparer (e.g., IS NOT NULL).
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIsNot<T>(Expression<Func<T, object>> expression, Query<DBQueryType> subquery) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.IS_NOT,
+                Subquery    = subquery
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using expressions and the IS NOT comparer (e.g., IS NOT NULL).
+    /// </summary>
+    /// <typeparam name="TLeft">The table type for the left side of the comparison.</typeparam>
+    /// <typeparam name="TRight">The table type for the right side of the comparison.</typeparam>
+    /// <param name="expressionLeft">The property expression for the left side of the comparison.</param>
+    /// <param name="expressionRight">The property expression for the right side of the comparison.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIsNot<TLeft, TRight>(Expression<Func<TLeft, object>> expressionLeft, Expression<Func<TRight, object>> expressionRight)
+        where TLeft  : class
+        where TRight : class
+    {
+        string leftTableName   = ReflectionCache.GetTableName<TLeft>();
+        string leftColumnName  = ReflectionCache.GetColumnName<TLeft>(expressionLeft);
+        string rightTableName  = ReflectionCache.GetTableName<TRight>();
+        string rightColumnName = ReflectionCache.GetColumnName<TRight>(expressionRight);
+
+        if (
+            !string.IsNullOrWhiteSpace(leftColumnName) &&
+            !string.IsNullOrWhiteSpace(rightColumnName)
+        ) {
+            return this.Where(
+                new FieldSelector {
+                    Table = leftTableName,
+                    Field = leftColumnName
+                },
+                new FieldSelector {
+                    Table = rightTableName,
+                    Field = rightColumnName
+                },
+                WhereComparer.IS_NOT
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the IS NOT comparer (e.g., IS NOT NULL).
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare (e.g., null or boolean).</param>
+    /// <param name="escape">Whether to escape the column.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIsNot<T>(string columnName, dynamic value, bool escape = true) where T : class {
+        columnName = ReflectionCache.GetColumnName<T>(columnName);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.IS_NOT,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
     }
     #endregion
 
@@ -1314,6 +2073,7 @@ public class Query<DBQueryType> : Renderable
     /// <param name="whereInSentence">The WHERE IN clause.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereIn(WhereIn<DBQueryType> whereInSentence) {
+        whereInSentence.Comparer = WhereComparer.IN;
         this.QueryWhereIn.Add(whereInSentence);
 
         this.Touch();
@@ -1341,7 +2101,7 @@ public class Query<DBQueryType> : Renderable
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereIn(string fieldName, List<dynamic> fieldValues) {
         return this.WhereIn(new WhereIn<DBQueryType> {
-            Field  = new FieldSelector(fieldName), 
+            Field  = new FieldSelector(fieldName),
             Values = fieldValues
         });
     }
@@ -1378,6 +2138,82 @@ public class Query<DBQueryType> : Renderable
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereIn(string fieldName, Query<DBQueryType> subquery) {
         return this.WhereIn(new WhereIn<DBQueryType> {
+            Field    = new FieldSelector(fieldName),
+            Subquery = subquery
+        });
+    }
+
+    /// <summary>
+    /// Adds a WHERE NOT IN clause to the query.
+    /// </summary>
+    /// <param name="whereInSentence">The WHERE NOT IN clause.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereNotIn(WhereIn<DBQueryType> whereInSentence) {
+        whereInSentence.Comparer = WhereComparer.NOT_IN;
+        this.QueryWhereIn.Add(whereInSentence);
+
+        this.Touch();
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE NOT IN clause for a field selector and values.
+    /// </summary>
+    /// <param name="left">The field selector.</param>
+    /// <param name="fieldValues">The list of values.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereNotIn(FieldSelector left, List<dynamic> fieldValues) {
+        return this.WhereNotIn(new WhereIn<DBQueryType> {
+            Field  = left,
+            Values = fieldValues
+        });
+    }
+
+    /// <summary>
+    /// Adds a WHERE NOT IN clause for a field name and values.
+    /// </summary>
+    /// <param name="fieldName">The field name.</param>
+    /// <param name="fieldValues">The list of values.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereNotIn(string fieldName, List<dynamic> fieldValues) {
+        return this.WhereNotIn(new WhereIn<DBQueryType> {
+            Field  = new FieldSelector(fieldName),
+            Values = fieldValues
+        });
+    }
+
+    /// <summary>
+    /// Adds a WHERE NOT IN clause for a property using an expression and values.
+    /// </summary>
+    /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="expression">The property expression.</param>
+    /// <param name="fieldValues">The list of values.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereNotIn<T>(Expression<Func<T, object>> expression, List<dynamic> fieldValues) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
+
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.WhereNotIn(new FieldSelector {
+                    Table  = tableName,
+                    Field  = columnName,
+                    Escape = true
+                },
+                fieldValues
+            );
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE NOT IN clause for a field name and subquery.
+    /// </summary>
+    /// <param name="fieldName">The field name.</param>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereNotIn(string fieldName, Query<DBQueryType> subquery) {
+        return this.WhereNotIn(new WhereIn<DBQueryType> {
             Field    = new FieldSelector(fieldName),
             Subquery = subquery
         });
@@ -1706,6 +2542,7 @@ public class Query<DBQueryType> : Renderable
             dataItem => new PreparedValue { Value = dataItem.Value, EscapeValue = true }
         ));
     }
+    #endregion
     #endregion
     #endregion
 
