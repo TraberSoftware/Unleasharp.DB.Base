@@ -588,7 +588,7 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Select<T>() where T : class{
         Table table = typeof(T).GetCustomAttribute<Table>();
         if (table != null) {
-            string tableName = typeof(T).GetTableName();
+            string tableName = ReflectionCache.GetTableName<T>();
 
             foreach (PropertyInfo propertyInfo in typeof(T).GetProperties()) {
                 if (!propertyInfo.IsReadableSystemColumn(this._Engine)) {
@@ -619,9 +619,9 @@ public class Query<DBQueryType> : Renderable
     /// <param name="expression">The property expression.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Select<T>(Expression<Func<T, object>> expression) where T : class {
-        string tableName    = typeof(T).GetTableName();
-        string propertyName = ExpressionHelper.ExtractPropertyName(expression);
-        string columnName   = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName    = ReflectionCache.GetTableName<T>();
+        string columnName   = ReflectionCache.GetColumnName<T>(expression);
+        string propertyName = ExpressionHelper.ExtractClassMemberName(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             MemberInfo? columnMember = typeof(T).GetMember(propertyName)?.FirstOrDefault();
@@ -830,9 +830,9 @@ public class Query<DBQueryType> : Renderable
     /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Set<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
-        string tableName    = typeof(T).GetTableName();
-        string propertyName = ExpressionHelper.ExtractPropertyName(expression);
-        string columnName   = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName    = ReflectionCache.GetTableName<T>();
+        string columnName   = ReflectionCache.GetColumnName<T>(expression);
+        string propertyName = ExpressionHelper.ExtractClassMemberName(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             MemberInfo? columnMember = typeof(T).GetMember(propertyName)?.FirstOrDefault();
@@ -934,6 +934,13 @@ public class Query<DBQueryType> : Renderable
     #endregion
 
     #region Query Building - On Conflict
+    /// <summary>
+    /// Specifies the behavior to apply when a conflict occurs during an insert operation.
+    /// </summary>
+    /// <param name="onConflict">The conflict resolution strategy to apply, such as ignoring the conflict or updating the existing record.</param>
+    /// <param name="keyColumnName">The name of the key column involved in the conflict. This parameter is optional and can be left empty if the
+    /// conflict resolution does not depend on a specific key column.</param>
+    /// <returns>The current query instance.</returns>
     public virtual DBQueryType OnConflict(OnInsertConflict onConflict, string keyColumnName = "") {
         this.QueryOnConflict          = onConflict;
         this.QueryOnConflictKeyColumn = keyColumnName;
@@ -942,10 +949,17 @@ public class Query<DBQueryType> : Renderable
         return (DBQueryType)this;
     }
 
+    /// <summary>
+    /// Specifies the behavior to apply when a conflict occurs during an insert operation.
+    /// </summary>
+    /// <typeparam name="T">The type of the entity being inserted.</typeparam>
+    /// <param name="onConflict">The conflict resolution strategy to apply, such as ignoring the conflict or updating the existing record.</param>
+    /// <param name="expression">An expression that identifies the property or column to use for conflict resolution.</param>
+    /// <returns>The current query instance.</returns>
     public virtual DBQueryType OnConflict<T>(OnInsertConflict onConflict, Expression<Func<T, object>> expression) where T : class {
-        string tableName    = typeof(T).GetTableName();
-        string propertyName = ExpressionHelper.ExtractPropertyName(expression);
-        string columnName   = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName    = ReflectionCache.GetTableName<T>();
+        string columnName   = ReflectionCache.GetColumnName<T>(expression);
+        string propertyName = ExpressionHelper.ExtractClassMemberName(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.OnConflict(onConflict, columnName);
@@ -1068,10 +1082,10 @@ public class Query<DBQueryType> : Renderable
         where JoinedTable : class
         where ParentTable : class
     {
-        string joinedTableName       = typeof(JoinedTable).GetTableName();
-        string joinedTableColumnName = ExpressionHelper.ExtractColumnName<JoinedTable>(joinedTableExpression);
-        string parentTableName       = typeof(ParentTable).GetTableName();
-        string parentTableColumnName = ExpressionHelper.ExtractColumnName<ParentTable>(parentTableExpression);
+        string joinedTableName       = ReflectionCache.GetTableName<JoinedTable>();
+        string joinedTableColumnName = ReflectionCache.GetColumnName<JoinedTable>(joinedTableExpression);
+        string parentTableName       = ReflectionCache.GetTableName<ParentTable>();
+        string parentTableColumnName = ReflectionCache.GetColumnName<ParentTable>(parentTableExpression);
 
         return this.Join(new Join<DBQueryType> {
             Direction   = direction,
@@ -1222,8 +1236,8 @@ public class Query<DBQueryType> : Renderable
     /// <param name="escape">Whether to escape the column.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Where<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new FieldSelector {
@@ -1247,7 +1261,7 @@ public class Query<DBQueryType> : Renderable
     /// <param name="escape">Whether to escape the column.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Where<T>(string columnName, dynamic value, bool escape = true) where T : class {
-        columnName = typeof(T).GetColumnName(columnName);
+        columnName = ReflectionCache.GetColumnName<T>(columnName);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new FieldSelector {
@@ -1268,8 +1282,8 @@ public class Query<DBQueryType> : Renderable
     /// <param name="where">The filtering condition to apply, including the field and comparison logic.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Where<T>(Expression<Func<T, object>> expression, Where<DBQueryType> where) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             where.Field = new FieldSelector(tableName, columnName, true);
@@ -1340,8 +1354,8 @@ public class Query<DBQueryType> : Renderable
     /// <param name="fieldValues">The list of values.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereIn<T>(Expression<Func<T, object>> expression, List<dynamic> fieldValues) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.WhereIn(new FieldSelector {
@@ -1395,8 +1409,8 @@ public class Query<DBQueryType> : Renderable
     /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereLike<T>(Expression<Func<T, object>> expression, string value, bool escape = true) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new Where<DBQueryType> { 
@@ -1485,8 +1499,8 @@ public class Query<DBQueryType> : Renderable
     /// <param name="expression">The property expression.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType GroupBy<T>(Expression<Func<T, object>> expression) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.GroupBy(new FieldSelector {
@@ -1545,8 +1559,8 @@ public class Query<DBQueryType> : Renderable
     /// <param name="direction">The order direction.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType OrderBy<T>(Expression<Func<T, object>> expression, OrderDirection direction = OrderDirection.ASC) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.OrderBy(new FieldSelector {
