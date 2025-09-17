@@ -49,3 +49,4 @@ node_modules/
 cache/
 dist/
 *.cmd
+docs/api/
