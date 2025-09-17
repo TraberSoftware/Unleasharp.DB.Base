@@ -317,6 +317,53 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     }
     #endregion
 
+    #region Row Tracking
+    /// <summary>
+    /// Updates the specified row in the database if changes are detected.
+    /// </summary>
+    /// <remarks>This method compares the provided row with the cached version of the row to detect changes.
+    /// If changes are found:
+    /// <list type="bullet">
+    /// <item><description>The table must have a primary key defined.</description></item>
+    /// <item><description>The primary key value must be present in the cached data.</description></item>
+    /// </list>
+    /// If these conditions are not met, the method returns <see langword="false"/>  without performing any updates.</remarks>
+    /// <param name="row">The row object to be updated. The object must represent a valid database row and include a primary key value.</param>
+    /// <returns><see langword="true"/> if the row was successfully updated; otherwise, <see langword="false"/>.</returns>
+    public bool Update(object row) {
+        ResultCacheRow cached = ResultCache.Get(row.GetHashCode());
+
+        if (cached != null) {
+            Dictionary<string, object> rowData = row.ToDynamicDictionary();
+            Dictionary<string, object> rowChanges = cached.Data.CompareWith(rowData);
+
+            if (rowChanges.Count > 0) {
+                if (string.IsNullOrEmpty(cached.KeyColumnName)) {
+                    // Can't update a row for a table without a Primary Key
+                    return false;
+                }
+                if (!cached.Data.ContainsKey(cached.KeyColumnName)) {
+                    // Can't update a row if we don't have the Primary Key value
+                    return false;
+                }
+
+                this._ResetResult();
+                this.DBQuery = Activator.CreateInstance<DBQueryType>();
+
+                this.DBQuery
+                    .Update()
+                    .From(cached.Table.Name)
+                    .Set(rowChanges)
+                    .Where(cached.KeyColumn, cached.Data[cached.KeyColumnName])
+                ;
+                return this.Execute<bool>();
+            }
+        }
+
+        return false;
+    }
+    #endregion
+
     /// <inheritdoc/>
     protected virtual bool _Execute() {
         throw new NotImplementedException();
@@ -385,7 +432,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         }
 
         foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField), offset, batchSize)) {
-            yield return row.GetObject<T>();
+            T TRow = row.GetObject<T>();
+            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+            yield return TRow;
         }
     }
 
@@ -406,7 +456,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         }
 
         foreach (DataRow row in this.Iterate(byKeyField, offset, batchSize)) {
-            yield return row.GetObject<T>();
+            T TRow = row.GetObject<T>();
+            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+            yield return TRow;
         }
     }
 
@@ -419,8 +472,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <param name="batchSize">The batch size for iteration.</param>
     /// <returns>An enumerable of objects of type <typeparamref name="T"/>.</returns>
     public virtual IEnumerable<T> Iterate<T>(Expression<Func<T, object>> expression, long offset = 0, int batchSize = 100) where T : class {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         if (this.DBQuery.QuerySelect.Count == 0) {
             this.DBQuery.Select<T>();
@@ -434,7 +487,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             Field  = columnName,
             Escape = true
         }, offset, batchSize)) {
-            yield return row.GetObject<T>();
+            T TRow = row.GetObject<T>();
+            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+            yield return TRow;
         }
     }
 
@@ -518,7 +574,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         }
 
         foreach (DataRow row in this.IterateByOffset(offset, batchSize)) {
-            yield return row.GetObject<T>();
+            T TRow = row.GetObject<T>();
+            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+            yield return TRow;
         }
     }
 
@@ -581,7 +640,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.Execute();
 
         foreach (DataRow row in this.AsEnumerable()) {
-            yield return row.GetObject<T>();
+            T TRow = row.GetObject<T>();
+            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+            yield return TRow;
         }
     }
 
@@ -606,7 +668,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         await this.ExecuteAsync();
 
         await foreach (DataRow row in this.AsEnumerableAsync()) {
-            yield return row.GetObject<T>();
+            T TRow = row.GetObject<T>();
+            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+            yield return TRow;
         }
     }
     #endregion
@@ -620,7 +685,12 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual List<T> ToList<T>() where T : class{
         this.Execute();
 
-        return this.Result?.AsEnumerable().Select(row => row.GetObject<T>()).ToList();
+        return this.Result?.AsEnumerable().Select(row => {
+            T TRow = row.GetObject<T>();
+            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+            return TRow;
+        }).ToList();
     }
 
     /// <summary>
@@ -631,7 +701,12 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual async Task<List<T>> ToListAsync<T>() where T : class{
         await this.ExecuteAsync();
 
-        return this.Result?.AsEnumerable().Select(row => row.GetObject<T>()).ToList();
+        return this.Result?.AsEnumerable().Select(row => {
+            T TRow = row.GetObject<T>();
+            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+            return TRow;
+        }).ToList();
     }
     #endregion
 
@@ -658,7 +733,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual T FirstOrDefault<T>() where T : class {
         this.Execute();
 
-        return this.FirstOrDefault()?.GetObject<T>();
+        T TRow = this.FirstOrDefault()?.GetObject<T>();
+        ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+
+        return TRow;
     }
 
     /// <summary>
