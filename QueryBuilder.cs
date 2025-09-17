@@ -235,7 +235,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this._AfterQueryExecution();
 
         object? result = null;
-        switch (this.DBQuery.QueryType) {
+        switch (this.LastQuery.QueryType) {
             case QueryType.COUNT:
             case QueryType.SELECT:
                 result = true switch {
@@ -637,8 +637,6 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type to map each row to.</typeparam>
     /// <returns>An enumerable of objects of type <typeparamref name="T"/>.</returns>
     public virtual IEnumerable<T> AsEnumerable<T>() where T : class {
-        this.Execute();
-
         foreach (DataRow row in this.AsEnumerable()) {
             T TRow = row.GetObject<T>();
             ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
@@ -652,8 +650,6 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <returns>An async enumerable of <see cref="DataRow"/> objects.</returns>
     public virtual async IAsyncEnumerable<DataRow> AsEnumerableAsync() {
-        await this.ExecuteAsync();
-
         foreach (DataRow row in this.Result?.Rows) {
             yield return row;
         }
@@ -716,8 +712,6 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <returns>The first <see cref="DataRow"/> or null.</returns>
     public virtual DataRow FirstOrDefault() {
-        this.Execute();
-
         foreach (DataRow row in this.AsEnumerable()) {
             return row;
         }
@@ -731,8 +725,6 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type to map the row to.</typeparam>
     /// <returns>The first object of type <typeparamref name="T"/> or null.</returns>
     public virtual T FirstOrDefault<T>() where T : class {
-        this.Execute();
-
         T TRow = this.FirstOrDefault()?.GetObject<T>();
         ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
 
@@ -744,9 +736,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <returns>A task representing the asynchronous operation, with the first <see cref="DataRow"/> or null as the result.</returns>
     public virtual async Task<DataRow> FirstOrDefaultAsync() {
-        await this.ExecuteAsync();
+        await foreach (DataRow row in this.AsEnumerableAsync()) {
+            return row;
+        }
 
-        return this.FirstOrDefault();
+        return null;
     }
 
     /// <summary>
@@ -755,9 +749,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type to map the row to.</typeparam>
     /// <returns>A task representing the asynchronous operation, with the first object of type <typeparamref name="T"/> or null as the result.</returns>
     public virtual async Task<T> FirstOrDefaultAsync<T>() where T : class {
-        await this.ExecuteAsync();
+        await foreach (T row in this.AsEnumerableAsync<T>()) {
+            return row;
+        }
 
-        return this.FirstOrDefault<T>();
+        return null;
     }
     #endregion
 
