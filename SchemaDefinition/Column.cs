@@ -63,8 +63,8 @@ public class Column : NamedStructure {
     /// <param name="propertyName">The name of the property corresponding to the column. This must match a property defined in the specified table
     /// type.</param>
     public Column(Type tableType, string propertyName) {
-        string tableName  = tableType.GetTableName();
-        string columnName = tableType.GetColumnName(propertyName);
+        string tableName  = ReflectionCache.GetTableName(tableType);
+        string columnName = ReflectionCache.GetColumnName(tableType, propertyName);
 
         this.Name = $"{tableName}::{columnName}";
     }
