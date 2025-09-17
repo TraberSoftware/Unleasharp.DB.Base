@@ -80,11 +80,11 @@ public class TableKey : NamedStructure {
     /// <param name="table">The type of the table associated with the key. Cannot be null.</param>
     /// <param name="columns">An array of column names that define the key. Cannot be null or contain null or empty values.</param>
     public TableKey(string name, Type table, params string[] columns) : base(name) {
-        Columns = columns.Select(column => table.GetColumnName(column)).ToArray();
+        Columns = columns.Select(column => ReflectionCache.GetColumnName(table, column)).ToArray();
     }
 
     public TableKey(string name, Type table, string column) : base(name) {
-        Column = table.GetColumnName(column);
+        Column = ReflectionCache.GetColumnName(table, column);
     }
 
     public TableKey() { }
@@ -390,10 +390,10 @@ public class ForeignKey : TableKey {
     /// <param name="referencedTableType">The type representing the table that the foreign key references.</param>
     /// <param name="referencedColumnName">The name of the column in the referenced table that the foreign key points to.</param>
     public ForeignKey(string name, Type table, string column, Type referencedTableType, string referencedColumnName) : base(name) {
-        string referencedTable  = referencedTableType.GetTableName();
-        string referencedColumn = referencedTableType.GetColumnName(referencedColumnName);
+        string referencedTable  = ReflectionCache.GetTableName(referencedTableType);
+        string referencedColumn = ReflectionCache.GetColumnName(referencedTableType, referencedColumnName);
 
-        Column           = table.GetColumnName(column);
+        Column           = ReflectionCache.GetColumnName(table, column);
         ReferencedTable  = referencedTable;
         ReferencedColumn = referencedColumn;
     }
@@ -411,10 +411,10 @@ public class ForeignKey : TableKey {
     /// <param name="referencedTableType">The type representing the table that the foreign key references.</param>
     /// <param name="referencedColumnName">The name of the column in the referenced table that the foreign key points to.</param>
     public ForeignKey(Type table, string column, Type referencedTableType, string referencedColumnName) : base(column) {
-        string referencedTable  = referencedTableType.GetTableName();
-        string referencedColumn = referencedTableType.GetColumnName(referencedColumnName);
+        string referencedTable  = ReflectionCache.GetTableName(referencedTableType);
+        string referencedColumn = ReflectionCache.GetColumnName(referencedTableType, referencedColumnName);
 
-        Column           = table.GetColumnName(column);
+        Column           = ReflectionCache.GetColumnName(table, column);
         ReferencedTable  = referencedTable;
         ReferencedColumn = referencedColumn;
     }
