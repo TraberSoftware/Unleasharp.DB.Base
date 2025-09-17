@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyVersion>1.7.1.0</AssemblyVersion>
-    <FileVersion>1.7.1</FileVersion>
-    <VersionPrefix>1.7.1</VersionPrefix>
+    <AssemblyVersion>1.8.0.0</AssemblyVersion>
+    <FileVersion>1.8.0</FileVersion>
+    <VersionPrefix>1.8.0</VersionPrefix>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="Unleasharp" Version="1.1.0" />
   </ItemGroup>
 
