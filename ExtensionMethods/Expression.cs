@@ -22,11 +22,14 @@ public static class ExpressionExtensions {
     /// this is a lambda expression selecting a property or field, such as <c>x => x.PropertyName</c>.</param>
     /// <returns>The attribute of type <typeparamref name="AttributeType"/> applied to the specified member, or <see
     /// langword="null"/> if no such attribute is found.</returns>
-    public static AttributeType GetAttribute<TableType, AttributeType>(this Expression<Func<TableType, object>> expression) where AttributeType : Attribute {
-        string tableName  = typeof(TableType).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<TableType>(expression);
+    public static AttributeType GetAttribute<TableType, AttributeType>(this Expression<Func<TableType, object>> expression)
+        where TableType     : class
+        where AttributeType : Attribute 
+    {
+        string tableName  = ReflectionCache.GetTableName<TableType>();
+        string memberName = ExpressionHelper.ExtractClassMemberName<TableType>(expression);
 
-        MemberInfo? member = typeof(TableType).GetMember(columnName)?.FirstOrDefault();
+        MemberInfo? member = typeof(TableType).GetMember(memberName)?.FirstOrDefault();
         if (member != null) {
             return member.GetCustomAttribute<AttributeType>();
         }
@@ -44,9 +47,9 @@ public static class ExpressionExtensions {
     /// type <typeparamref name="T"/>.</param>
     /// <returns>A <see cref="MemberInfo"/> object representing the member specified in the expression, or <see langword="null"/>
     /// if no matching member is found.</returns>
-    public static MemberInfo GetMember<T>(this Expression<Func<T, object>> expression) {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+    public static MemberInfo GetMember<T>(this Expression<Func<T, object>> expression) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         return typeof(T).GetMember(columnName)?.FirstOrDefault();
     }
@@ -62,9 +65,9 @@ public static class ExpressionExtensions {
     /// <param name="expression">An expression that specifies the column to select. The expression should reference a property or field of
     /// <typeparamref name="T"/>.</param>
     /// <returns>A <see cref="FieldSelector"/> representing the selected column, including its table name and column name.</returns>
-    public static FieldSelector GetFieldSelector<T>(this Expression<Func<T, object>> expression) {
-        string tableName  = typeof(T).GetTableName();
-        string columnName = ExpressionHelper.ExtractColumnName<T>(expression);
+    public static FieldSelector GetFieldSelector<T>(this Expression<Func<T, object>> expression) where T : class {
+        string tableName  = ReflectionCache.GetTableName<T>();
+        string columnName = ReflectionCache.GetColumnName<T>(expression);
 
         return new FieldSelector(tableName, columnName, true);
     }
