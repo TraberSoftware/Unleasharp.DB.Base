@@ -237,7 +237,6 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         object? result = null;
         switch (this.LastQuery.QueryType) {
             case QueryType.COUNT:
-            case QueryType.SELECT:
                 result = true switch {
                     true when typeof(T) == typeof(bool)  => this.TotalCount > 0,
                     true when typeof(T) == typeof(int)   => this.TotalCount,
@@ -246,14 +245,23 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
                     true when typeof(T) == typeof(ulong) => this.TotalCount
                 };
                 break;
+            case QueryType.SELECT:
+                result = true switch {
+                    true when typeof(T) == typeof(bool)  => (this.Result?.Rows?.Count ?? 0) > 0,
+                    true when typeof(T) == typeof(int)   =>  this.Result?.Rows?.Count ?? 0,
+                    true when typeof(T) == typeof(long)  =>  this.Result?.Rows?.Count ?? 0,
+                    true when typeof(T) == typeof(uint)  =>  this.Result?.Rows?.Count ?? 0,
+                    true when typeof(T) == typeof(ulong) =>  this.Result?.Rows?.Count ?? 0
+                };
+                break;
             case QueryType.INSERT:
                 result = true switch {
-                    true when typeof(T) == typeof(bool)   => this.AffectedRows == this.DBQuery.QueryValues.Count,
-                    true when typeof(T) == typeof(int)    => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
-                    true when typeof(T) == typeof(long)   => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
-                    true when typeof(T) == typeof(uint)   => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
-                    true when typeof(T) == typeof(ulong)  => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
-                    true when typeof(T) == typeof(string) => this.DBQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows 
+                    true when typeof(T) == typeof(bool)   => this.AffectedRows == this.LastQuery.QueryValues.Count,
+                    true when typeof(T) == typeof(int)    => this.LastQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
+                    true when typeof(T) == typeof(long)   => this.LastQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
+                    true when typeof(T) == typeof(uint)   => this.LastQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
+                    true when typeof(T) == typeof(ulong)  => this.LastQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows,
+                    true when typeof(T) == typeof(string) => this.LastQuery.QueryValues.Count == 1 ? this.LastInsertedId : this.AffectedRows
                 };
                 break;
             case QueryType.UPDATE:
@@ -433,7 +441,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         foreach (DataRow row in this.Iterate(new FieldSelector(byKeyField), offset, batchSize)) {
             T TRow = row.GetObject<T>();
-            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+            ResultCache.Set(TRow);
 
             yield return TRow;
         }
@@ -457,7 +465,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         foreach (DataRow row in this.Iterate(byKeyField, offset, batchSize)) {
             T TRow = row.GetObject<T>();
-            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+            ResultCache.Set(TRow);
 
             yield return TRow;
         }
@@ -488,7 +496,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             Escape = true
         }, offset, batchSize)) {
             T TRow = row.GetObject<T>();
-            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+            ResultCache.Set(TRow);
 
             yield return TRow;
         }
@@ -523,13 +531,17 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             cachedQuery.Limit(batchSize);
             this.DBQuery = cachedQuery;
 
-            IEnumerable<DataRow> resultEnumerator = this.AsEnumerable();
-            if (resultEnumerator == null || !resultEnumerator.Any()) {
+            if (!this.Execute<bool>()) {
                 endFound = true;
                 break;
             }
 
-            foreach (DataRow row in resultEnumerator) {
+            if (this.Result?.Rows == null || this.Result?.Rows.Count == 0) {
+                endFound = true;
+                break;
+            }
+
+            foreach (DataRow row in this.Result?.Rows) {
                 try {
                     string byKeyColumnName = !string.IsNullOrWhiteSpace(byKeyField.Table) ? $"{byKeyField.Table}::{byKeyField.Field}" : byKeyField.Field;
                     if (!row.Table.Columns.Contains(byKeyColumnName)) {
@@ -575,7 +587,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         foreach (DataRow row in this.IterateByOffset(offset, batchSize)) {
             T TRow = row.GetObject<T>();
-            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+            ResultCache.Set(TRow);
 
             yield return TRow;
         }
@@ -600,17 +612,18 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
             cachedQuery.Limit(batchSize, offset);
             this.DBQuery = cachedQuery;
+            
+            if (this.Execute<bool>()) {
+                if (this.Result?.Rows == null || this.Result?.Rows.Count == 0) {
+                    endFound = true;
+                    break;
+                }
 
-            IEnumerable<DataRow> resultEnumerator = this.AsEnumerable();
-            if (resultEnumerator == null || !resultEnumerator.Any()) {
-                endFound = true;
-                break;
-            }
+                foreach (DataRow row in this.Result?.Rows) {
+                    offset++;
 
-            foreach (DataRow row in resultEnumerator) {
-                offset++;
-
-                yield return row;
+                    yield return row;
+                }
             }
         }
 
@@ -624,7 +637,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <returns>An enumerable of <see cref="DataRow"/> objects.</returns>
     public virtual IEnumerable<DataRow> AsEnumerable() {
-        this.Execute();
+        if (this.Result == null || this.DBQuery.HasChanged) {
+            this.Execute();
+        }
 
         foreach (DataRow row in this.Result?.Rows) {
             yield return row;
@@ -639,7 +654,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual IEnumerable<T> AsEnumerable<T>() where T : class {
         foreach (DataRow row in this.AsEnumerable()) {
             T TRow = row.GetObject<T>();
-            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+            ResultCache.Set(TRow);
 
             yield return TRow;
         }
@@ -649,7 +664,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// Asynchronously returns the query results as an enumerable of <see cref="DataRow"/> objects.
     /// </summary>
     /// <returns>An async enumerable of <see cref="DataRow"/> objects.</returns>
-    public virtual async IAsyncEnumerable<DataRow> AsEnumerableAsync() {
+    protected virtual async IAsyncEnumerable<DataRow> AsEnumerableAsync() {
+        if (this.Result == null || this.DBQuery.HasChanged) {
+            await this.ExecuteAsync();
+        }
+
         foreach (DataRow row in this.Result?.Rows) {
             yield return row;
         }
@@ -661,11 +680,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type to map each row to.</typeparam>
     /// <returns>An async enumerable of objects of type <typeparamref name="T"/>.</returns>
     public virtual async IAsyncEnumerable<T> AsEnumerableAsync<T>() where T : class {
-        await this.ExecuteAsync();
-
         await foreach (DataRow row in this.AsEnumerableAsync()) {
             T TRow = row.GetObject<T>();
-            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+            ResultCache.Set(TRow);
 
             yield return TRow;
         }
@@ -679,11 +696,13 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type to map each row to.</typeparam>
     /// <returns>A list of objects of type <typeparamref name="T"/>.</returns>
     public virtual List<T> ToList<T>() where T : class{
-        this.Execute();
+        if (this.Result == null || this.DBQuery.HasChanged) {
+            this.Execute();
+        }
 
         return this.Result?.AsEnumerable().Select(row => {
             T TRow = row.GetObject<T>();
-            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+            ResultCache.Set(TRow);
 
             return TRow;
         }).ToList();
@@ -695,11 +714,13 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type to map each row to.</typeparam>
     /// <returns>A task representing the asynchronous operation, with a list of objects of type <typeparamref name="T"/> as the result.</returns>
     public virtual async Task<List<T>> ToListAsync<T>() where T : class{
-        await this.ExecuteAsync();
+        if (this.Result == null || this.DBQuery.HasChanged) {
+            await this.ExecuteAsync();
+        }
 
         return this.Result?.AsEnumerable().Select(row => {
             T TRow = row.GetObject<T>();
-            ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+            ResultCache.Set(TRow);
 
             return TRow;
         }).ToList();
@@ -712,6 +733,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <returns>The first <see cref="DataRow"/> or null.</returns>
     public virtual DataRow FirstOrDefault() {
+        this.DBQuery.Limit(1, this.DBQuery.QueryLimit?.Offset ?? 0);
+
         foreach (DataRow row in this.AsEnumerable()) {
             return row;
         }
@@ -726,7 +749,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <returns>The first object of type <typeparamref name="T"/> or null.</returns>
     public virtual T FirstOrDefault<T>() where T : class {
         T TRow = this.FirstOrDefault()?.GetObject<T>();
-        ResultCache.Set(TRow.GetHashCode(), new ResultCacheRow(TRow));
+        ResultCache.Set(TRow);
 
         return TRow;
     }
@@ -736,6 +759,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <returns>A task representing the asynchronous operation, with the first <see cref="DataRow"/> or null as the result.</returns>
     public virtual async Task<DataRow> FirstOrDefaultAsync() {
+        this.DBQuery.Limit(1, this.DBQuery.QueryLimit?.Offset ?? 0);
+
         await foreach (DataRow row in this.AsEnumerableAsync()) {
             return row;
         }
@@ -749,11 +774,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <typeparam name="T">The type to map the row to.</typeparam>
     /// <returns>A task representing the asynchronous operation, with the first object of type <typeparamref name="T"/> or null as the result.</returns>
     public virtual async Task<T> FirstOrDefaultAsync<T>() where T : class {
-        await foreach (T row in this.AsEnumerableAsync<T>()) {
-            return row;
-        }
+        T TRow = (await this.FirstOrDefaultAsync())?.GetObject<T>();
+        ResultCache.Set(TRow);
 
-        return null;
+        return TRow;
     }
     #endregion
 
@@ -767,8 +791,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <returns>A tuple of two objects or null.</returns>
     public virtual Tuple<T1, T2> FirstOrDefault<T1, T2>()
         where T1 : class
-        where T2 : class {
-        this.Execute();
+        where T2 : class
+    {
         return this.FirstOrDefault()?.GetTuple<T1, T2>();
     }
 
@@ -780,9 +804,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <returns>A task representing the asynchronous operation, with a tuple of two objects or null as the result.</returns>
     public virtual async Task<Tuple<T1, T2>> FirstOrDefaultAsync<T1, T2>()
         where T1 : class
-        where T2 : class {
-        await this.ExecuteAsync();
-        return this.FirstOrDefault<T1, T2>();
+        where T2 : class
+    {
+        return (await this.FirstOrDefaultAsync())?.GetTuple<T1, T2>();
     }
 
     /// <summary>
@@ -795,8 +819,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual Tuple<T1, T2, T3> FirstOrDefault<T1, T2, T3>()
         where T1 : class
         where T2 : class
-        where T3 : class {
-        this.Execute();
+        where T3 : class
+    {
         return this.FirstOrDefault()?.GetTuple<T1, T2, T3>();
     }
 
@@ -810,9 +834,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual async Task<Tuple<T1, T2, T3>> FirstOrDefaultAsync<T1, T2, T3>()
         where T1 : class
         where T2 : class
-        where T3 : class {
-        await this.ExecuteAsync();
-        return this.FirstOrDefault<T1, T2, T3>();
+        where T3 : class
+    {
+        return (await this.FirstOrDefaultAsync())?.GetTuple<T1, T2, T3>();
     }
 
     /// <summary>
@@ -827,8 +851,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T1 : class
         where T2 : class
         where T3 : class
-        where T4 : class {
-        this.Execute();
+        where T4 : class
+    {
         return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4>();
     }
 
@@ -844,9 +868,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T1 : class
         where T2 : class
         where T3 : class
-        where T4 : class {
-        await this.ExecuteAsync();
-        return this.FirstOrDefault<T1, T2, T3, T4>();
+        where T4 : class
+    {
+        return (await this.FirstOrDefaultAsync())?.GetTuple<T1, T2, T3, T4>();
     }
 
     /// <summary>
@@ -863,8 +887,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T2 : class
         where T3 : class
         where T4 : class
-        where T5 : class {
-        this.Execute();
+        where T5 : class
+    {
         return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4, T5>();
     }
 
@@ -882,9 +906,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T2 : class
         where T3 : class
         where T4 : class
-        where T5 : class {
-        await this.ExecuteAsync();
-        return this.FirstOrDefault<T1, T2, T3, T4, T5>();
+        where T5 : class
+    {
+        return (await this.FirstOrDefaultAsync())?.GetTuple<T1, T2, T3, T4, T5>();
     }
 
     /// <summary>
@@ -903,8 +927,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T3 : class
         where T4 : class
         where T5 : class
-        where T6 : class {
-        this.Execute();
+        where T6 : class
+    {
         return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4, T5, T6>();
     }
 
@@ -924,9 +948,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T3 : class
         where T4 : class
         where T5 : class
-        where T6 : class {
-        await this.ExecuteAsync();
-        return this.FirstOrDefault<T1, T2, T3, T4, T5, T6>();
+        where T6 : class
+    {
+        return (await this.FirstOrDefaultAsync())?.GetTuple<T1, T2, T3, T4, T5, T6>();
     }
 
     /// <summary>
@@ -947,8 +971,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T4 : class
         where T5 : class
         where T6 : class
-        where T7 : class {
-        this.Execute();
+        where T7 : class
+    {
         return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4, T5, T6, T7>();
     }
 
@@ -970,9 +994,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T4 : class
         where T5 : class
         where T6 : class
-        where T7 : class {
-        await this.ExecuteAsync();
-        return this.FirstOrDefault<T1, T2, T3, T4, T5, T6, T7>();
+        where T7 : class
+    {
+        return (await this.FirstOrDefaultAsync())?.GetTuple<T1, T2, T3, T4, T5, T6, T7>();
     }
 
     /// <summary>
@@ -995,8 +1019,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T5 : class
         where T6 : class
         where T7 : class
-        where T8 : class {
-        this.Execute();
+        where T8 : class
+    {
         return this.FirstOrDefault()?.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>();
     }
 
@@ -1020,9 +1044,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T5 : class
         where T6 : class
         where T7 : class
-        where T8 : class {
-        await this.ExecuteAsync();
-        return this.FirstOrDefault<T1, T2, T3, T4, T5, T6, T7, T8>();
+        where T8 : class
+    {
+        return (await this.FirstOrDefaultAsync())?.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>();
     }
     #endregion
 
@@ -1035,10 +1059,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <returns>An enumerable of tuples of two objects.</returns>
     public virtual IEnumerable<Tuple<T1, T2>> AsEnumerable<T1, T2>()
         where T1 : class 
-        where T2 : class 
+        where T2 : class
     {
-        this.Execute();
-
         foreach (DataRow row in this.AsEnumerable()) {
             yield return row.GetTuple<T1, T2>();
         }
@@ -1052,10 +1074,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <returns>An async enumerable of tuples of two objects.</returns>
     public virtual async IAsyncEnumerable<Tuple<T1, T2>> AsEnumerableAsync<T1, T2>()
         where T1 : class
-        where T2 : class 
+        where T2 : class
     {
-        await this.ExecuteAsync();
-
         await foreach (DataRow row in this.AsEnumerableAsync()) {
             yield return row.GetTuple<T1, T2>();
         }
@@ -1071,8 +1091,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual IEnumerable<Tuple<T1, T2, T3>> AsEnumerable<T1, T2, T3>()
         where T1 : class
         where T2 : class
-        where T3 : class {
-        this.Execute();
+        where T3 : class
+    {
         foreach (DataRow row in this.AsEnumerable()) {
             yield return row.GetTuple<T1, T2, T3>();
         }
@@ -1088,8 +1108,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual async IAsyncEnumerable<Tuple<T1, T2, T3>> AsEnumerableAsync<T1, T2, T3>()
         where T1 : class
         where T2 : class
-        where T3 : class {
-        await this.ExecuteAsync();
+        where T3 : class
+    {
+
         await foreach (DataRow row in this.AsEnumerableAsync()) {
             yield return row.GetTuple<T1, T2, T3>();
         }
@@ -1318,8 +1339,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T5 : class
         where T6 : class
         where T7 : class
-        where T8 : class {
-        await this.ExecuteAsync();
+        where T8 : class
+    {
         await foreach (DataRow row in this.AsEnumerableAsync()) {
             yield return row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>();
         }
@@ -1337,9 +1358,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T1 : class
         where T2 : class 
     {
-        this.Execute();
-
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2>()).ToList();
+        return this.AsEnumerable().Select(row => row.GetTuple<T1, T2>()).ToList();
     }
 
     /// <summary>
@@ -1350,10 +1369,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <returns>A task representing the asynchronous operation, with a list of tuples of two objects as the result.</returns>
     public virtual async Task<List<Tuple<T1, T2>>> ToListAsync<T1, T2>()
         where T1 : class
-        where T2 : class {
-        await this.ExecuteAsync();
-
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2>()).ToList();
+        where T2 : class
+    {
+        return await this.AsEnumerableAsync().Select(row => row.GetTuple<T1, T2>()).ToListAsync();
     }
 
     /// <summary>
@@ -1366,9 +1384,13 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual List<Tuple<T1, T2, T3>> ToList<T1, T2, T3>()
         where T1 : class
         where T2 : class
-        where T3 : class {
-        this.Execute();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3>()).ToList();
+        where T3 : class
+    {
+        if (this.Result == null || this.DBQuery.HasChanged) {
+            this.Execute();
+        }
+
+        return this.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3>()).ToList();
     }
 
     /// <summary>
@@ -1381,9 +1403,13 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     public virtual async Task<List<Tuple<T1, T2, T3>>> ToListAsync<T1, T2, T3>()
         where T1 : class
         where T2 : class
-        where T3 : class {
-        await this.ExecuteAsync();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3>()).ToList();
+        where T3 : class
+    {
+        if (this.Result == null || this.DBQuery.HasChanged) {
+            await this.ExecuteAsync();
+        }
+
+        return await this.AsEnumerableAsync().Select(row => row.GetTuple<T1, T2, T3>()).ToListAsync();
     }
 
     /// <summary>
@@ -1400,7 +1426,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T3 : class
         where T4 : class {
         this.Execute();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4>()).ToList();
+        return this.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4>()).ToList();
     }
 
     /// <summary>
@@ -1417,7 +1443,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T3 : class
         where T4 : class {
         await this.ExecuteAsync();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4>()).ToList();
+        return await this.AsEnumerableAsync().Select(row => row.GetTuple<T1, T2, T3, T4>()).ToListAsync();
     }
 
     /// <summary>
@@ -1436,7 +1462,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T4 : class
         where T5 : class {
         this.Execute();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5>()).ToList();
+        return this.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5>()).ToList();
     }
 
     /// <summary>
@@ -1455,7 +1481,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T4 : class
         where T5 : class {
         await this.ExecuteAsync();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5>()).ToList();
+        return await this.AsEnumerableAsync().Select(row => row.GetTuple<T1, T2, T3, T4, T5>()).ToListAsync();
     }
 
     /// <summary>
@@ -1476,7 +1502,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T5 : class
         where T6 : class {
         this.Execute();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6>()).ToList();
+        return this.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6>()).ToList();
     }
 
     /// <summary>
@@ -1497,7 +1523,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T5 : class
         where T6 : class {
         await this.ExecuteAsync();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6>()).ToList();
+        return await this.AsEnumerableAsync().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6>()).ToListAsync();
     }
 
     /// <summary>
@@ -1520,7 +1546,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T6 : class
         where T7 : class {
         this.Execute();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7>()).ToList();
+        return this.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7>()).ToList();
     }
 
     /// <summary>
@@ -1543,7 +1569,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T6 : class
         where T7 : class {
         await this.ExecuteAsync();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7>()).ToList();
+        return await this.AsEnumerableAsync().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7>()).ToListAsync();
     }
 
     /// <summary>
@@ -1568,7 +1594,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T7 : class
         where T8 : class {
         this.Execute();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>()).ToList();
+        return this.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>()).ToList();
     }
 
     /// <summary>
@@ -1593,7 +1619,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         where T7 : class
         where T8 : class {
         await this.ExecuteAsync();
-        return this.Result?.AsEnumerable().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>()).ToList();
+        return await this.AsEnumerableAsync().Select(row => row.GetTuple<T1, T2, T3, T4, T5, T6, T7, T8>()).ToListAsync();
     }
     #endregion
 
