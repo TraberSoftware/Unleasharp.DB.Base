@@ -1206,11 +1206,13 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     /// <param name="left">The field selector.</param>
     /// <param name="fieldValue">The value to compare.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
-    public virtual DBQueryType Where(FieldSelector left, dynamic fieldValue) {
+    public virtual DBQueryType Where(FieldSelector left, dynamic fieldValue, bool escape = true) {
         return this.Where(new Where<DBQueryType> {
-            Field = left,
-            Value = fieldValue
+            Field       = left,
+            Value       = fieldValue,
+            EscapeValue = escape
         });
     }
 
@@ -1233,7 +1235,7 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Where<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = ReflectionCache.GetTableName<T>();
