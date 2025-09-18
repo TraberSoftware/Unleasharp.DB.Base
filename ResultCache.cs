@@ -11,6 +11,14 @@ public static class ResultCache {
         ExpirationScanFrequency = TimeSpan.FromSeconds(30)
     });
 
+    public static bool Set(object row) {
+        if (row != null) {
+            return Set(row.GetHashCode(), new ResultCacheRow(row));
+        }
+
+        return false;
+    }
+
     public static bool Set(int hashCode, ResultCacheRow row) {
         if (row == null) {
             return false;
