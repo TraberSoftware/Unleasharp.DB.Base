@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.IO;
 using System.Reflection;
 using Unleasharp.DB.Base.SchemaDefinition;
 using Unleasharp.ExtensionMethods;
@@ -134,9 +135,9 @@ public static class DataRowExtension {
                 catch (Exception cex) {
                     // Handle edge cases or assing object as-is. If data types don't match, it will throw an exception on SetValue()
                     value = true switch {
-                        true when row[rowFieldName] is DateTime && memberInfoType == typeof(DateOnly) => DateOnly.FromDateTime((DateTime)row[rowFieldName]),
-                        true when row[rowFieldName] is DateOnly && memberInfoType == typeof(DateTime) => ((DateOnly)row[rowFieldName]).ToDateTime(TimeOnly.Parse("00:00:00")),
-
+                        true when row[rowFieldName] is DateTime     && memberInfoType == typeof(DateOnly) =>   DateOnly.FromDateTime((DateTime)row[rowFieldName]),
+                        true when row[rowFieldName] is DateOnly     && memberInfoType == typeof(DateTime) => ((DateOnly)row[rowFieldName]).ToDateTime(TimeOnly.Parse("00:00:00")),
+                        true when row[rowFieldName] is MemoryStream && memberInfoType == typeof(byte[])   => ((MemoryStream)row[rowFieldName]).ToByteArray(),
                         _ => row[rowFieldName]
                     };
                 }
