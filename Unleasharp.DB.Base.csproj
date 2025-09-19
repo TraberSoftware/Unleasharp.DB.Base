@@ -27,7 +27,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="System.Linq.Async" Version="6.0.3" />
-    <PackageReference Include="Unleasharp" Version="1.1.0" />
+    <PackageReference Include="Unleasharp" Version="1.1.1" />
   </ItemGroup>
 
   <ItemGroup>
