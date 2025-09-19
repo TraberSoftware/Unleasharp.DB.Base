@@ -93,4 +93,27 @@ public static class ObjectExtensions {
 
         result.Add(dbColumnName, value);
     }
+
+    /// <summary>
+    /// Determines whether the specified object represents a whole number.
+    /// </summary>
+    /// <remarks>This method checks if the provided object is one of the integral numeric types in .NET.  If
+    /// <paramref name="value"/> is <see langword="null"/>, the method returns <see langword="false"/>.</remarks>
+    /// <param name="value">The object to evaluate. This can be any type.</param>
+    /// <returns><see langword="true"/> if <paramref name="value"/> is a whole number  (e.g., an instance of <see cref="short"/>,
+    /// <see cref="ushort"/>, <see cref="int"/>,  <see cref="uint"/>, <see cref="long"/>, or <see cref="ulong"/>);
+    /// otherwise, <see langword="false"/>.</returns>
+    public static bool IsWholeNumber(this object value) {
+        if (value == null) {
+            return false;
+        }
+
+        return value is short
+            || value is ushort
+            || value is int
+            || value is uint
+            || value is long
+            || value is ulong
+        ;
+    }
 }
