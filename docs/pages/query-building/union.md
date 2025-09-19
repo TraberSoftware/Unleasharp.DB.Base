@@ -24,64 +24,41 @@ The following methods support union operations:
 
 ```csharp
 List<ExampleTable> unionRows = dbConnector.QueryBuilder().Build(query => query
-    .Union(
-        Query.GetInstance()
-            .Select<ExampleTable>()
-            .From<ExampleTable>()
-            .Where<ExampleTable>(row => row.Id, new Where<Query> {
-                Value    = 10,
-                Comparer = WhereComparer.LOWER_EQUALS
-            })
+    .Select()
+    .Union(query => query
+        .Select<ExampleTable>()
+        .From<ExampleTable>()
+        .WhereLowerEquals<ExampleTable>(row => row.Id, 10)
     )
-    .Union(
-        Query.GetInstance()
-            .Select<ExampleTable>()
-            .From<ExampleTable>()
-            .Where<ExampleTable>(row => row.Id, new Where<Query> {
-                Value    = 10,
-                Comparer = WhereComparer.GREATER
-            })
-            .Where<ExampleTable>(row => row.Id, new Where<Query> {
-                Value    = 20,
-                Comparer = WhereComparer.LOWER_EQUALS,
-            })
+    .Union(query => query
+        .Select<ExampleTable>()
+        .From<ExampleTable>()
+        .WhereGreater    <ExampleTable>(row => row.Id, 10)
+        .WhereLowerEquals<ExampleTable>(row => row.Id, 20)
     )
     .OrderBy(typeof(ExampleTable).GetColumnName(nameof(ExampleTable.Id)))
-    .Limit(20)
 ).ToList<ExampleTable>();
 ```
 
 ### Union as Subselect
 
 ```csharp
-List<ExampleTable> complexUnion = dbConnector.QueryBuilder().Build(query => query
+List<ExampleTable> unionRows = dbConnector.QueryBuilder().Build(query => query
+    .From(query => query
+        .Select()
+        .Union(query => query
+            .Select<ExampleTable>()
+            .From<ExampleTable>()
+            .WhereLowerEquals<ExampleTable>(row => row.Id, 10)
+        )
+        .Union(query => query
+            .Select<ExampleTable>()
+            .From<ExampleTable>()
+            .WhereGreater    <ExampleTable>(row => row.Id, 10)
+            .WhereLowerEquals<ExampleTable>(row => row.Id, 20)
+        )
+    ,"unioned")
+    .OrderBy(typeof(ExampleTable).GetColumnName(nameof(ExampleTable.Id)))
     .Select()
-    .From(Query.GetInstance()
-        .Union(
-            Query.GetInstance()
-                .Select<ExampleTable>()
-                .From<ExampleTable>()
-                .Where<ExampleTable>(row => row.Id, new Where<Query> {
-                    Value    = 10,
-                    Comparer = WhereComparer.LOWER_EQUALS
-                })
-        )
-        .Union(
-            Query.GetInstance()
-                .Select<ExampleTable>()
-                .From<ExampleTable>()
-                .Where<ExampleTable>(row => row.Id, new Where<Query> {
-                    Value    = 10,
-                    Comparer = WhereComparer.GREATER
-                })
-                .Where<ExampleTable>(row => row.Id, new Where<Query> {
-                    Value    = 20,
-                    Comparer = WhereComparer.LOWER_EQUALS,
-                })
-        )
-        .OrderBy(typeof(ExampleTable).GetColumnName(nameof(ExampleTable.Id)))
-        .Limit(20)
-    , "subqueryAlias")
-    .OrderBy(typeof(ExampleTable).GetColumnName(nameof(ExampleTable.Id)), OrderDirection.DESC)
 ).ToList<ExampleTable>();
 ```

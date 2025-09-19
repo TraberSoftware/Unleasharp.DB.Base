@@ -14,7 +14,8 @@ One or more `Where()` sentences are also welcome to determine the affected rows.
 
 ## Single Row
 
-Update a specific row using Query Expressions and retrieve the result as bool
+Update a specific row using Query Expressions and retrieve the result as a boolean.
+
 ```csharp
 bool updated = dbConnector.QueryBuilder().Build(query => query
     .From <ExampleTable>()
@@ -31,7 +32,9 @@ bool updated = dbConnector.QueryBuilder().Build(query => query
 
 ## Multiple Rows
 
-Update multiple rows by using a conditional where and retrieve the number of affected rows as result
+Update multiple rows by using a conditional `Where` clause. 
+The example returns a boolean indicating whether the update executed successfully; adjust the `Execute<T>()` type if you need a different kind of result (for example, an integer count of affected rows).
+
 ```csharp
 bool updated = dbConnector.QueryBuilder().Build(query => query
     .From <ExampleTable>()
@@ -44,4 +47,31 @@ bool updated = dbConnector.QueryBuilder().Build(query => query
     .Where<ExampleTable>((row) => row.Id,              "> 1000", false)
     .Update()
 ).Execute<bool>();
+```
+
+## Automatic Update
+
+Objects loaded via the Query Builder (for example with `FirstOrDefault<T>()` or `ToList<T>()`) can be updated directly by passing the object back to `QueryBuilder.Update(row)`. The object must map to a table and include the primary or unique key value so the correct row can be targeted.
+
+```csharp
+ExampleTable toUpdate = dbConnector.QueryBuilder().Build(query => query
+    .From<ExampleTable>()
+    .OrderBy<ExampleTable>(row => row.Id, OrderDirection.DESC)
+    .Limit(1)
+    .Select()
+).FirstOrDefault<ExampleTable>();
+
+toUpdate.MediumText = "Updated medium text";
+bool updated = dbConnector.QueryBuilder().Update(toUpdate);
+```
+
+This will typically translate into a SQL UPDATE statement similar to:
+
+```sql
+UPDATE
+    "example_table" 
+SET 
+    "_mediumtext"='Updated medium text' 
+WHERE 
+    "example_table"."id"=1
 ```
