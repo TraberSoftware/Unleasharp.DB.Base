@@ -11,6 +11,17 @@ public static class ResultCache {
         ExpirationScanFrequency = TimeSpan.FromSeconds(30)
     });
 
+    public static TimeSpan SlidingExpiration  { get; private set; } = TimeSpan.FromMinutes(5);
+    public static TimeSpan AbsoluteExpiration { get; private set; } = TimeSpan.FromMinutes(10);
+
+    public static void SetSlidingExpiration(TimeSpan timeSpan) {
+        SlidingExpiration = timeSpan;
+    }
+
+    public static void SetAbsoluteExpiration(TimeSpan timeSpan) {
+        AbsoluteExpiration = timeSpan;
+    }
+
     public static bool Set(object row) {
         if (row != null) {
             return Set(row.GetHashCode(), new ResultCacheRow(row));
@@ -28,8 +39,8 @@ public static class ResultCache {
             hashCode, 
             row, 
             new MemoryCacheEntryOptions()
-                .SetSlidingExpiration (TimeSpan.FromMinutes(5)) // resets after each access
-                .SetAbsoluteExpiration(TimeSpan.FromMinutes(10)) // max total lifetime
+                .SetSlidingExpiration (SlidingExpiration)  // resets after each access
+                .SetAbsoluteExpiration(AbsoluteExpiration) // max total lifetime
         ) != null;
     }
 
