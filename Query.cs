@@ -496,6 +496,9 @@ public class Query<DBQueryType> : Renderable
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Select() {
         this.SetQueryType(QueryType.SELECT);
+        if (this.QueryUnion.Any()) {
+            this.SetQueryType(QueryType.SELECT_UNION);
+        }
 
         return (DBQueryType)this;
     }
@@ -561,9 +564,8 @@ public class Query<DBQueryType> : Renderable
     /// <param name="select">The select clause.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Select(Select<DBQueryType> select) {
-        this.SetQueryType(QueryType.SELECT);
-
         this.QuerySelect.Add(select);
+        this.Select();
 
         this.Touch();
         return (DBQueryType) this;
@@ -584,8 +586,9 @@ public class Query<DBQueryType> : Renderable
     /// Adds SELECT clauses for all readable columns of the specified type.
     /// </summary>
     /// <typeparam name="T">The table type.</typeparam>
+    /// <param name="withTable">Prepend the table name to the column names.</param>
     /// <returns>The current query instance.</returns>
-    public virtual DBQueryType Select<T>() where T : class{
+    public virtual DBQueryType Select<T>(bool withTable = true) where T : class{
         Table table = typeof(T).GetCustomAttribute<Table>();
         if (table != null) {
             string tableName = ReflectionCache.GetTableName<T>();
@@ -602,7 +605,7 @@ public class Query<DBQueryType> : Renderable
                 }
 
                 this.Select(new FieldSelector {
-                    Table  = tableName, 
+                    Table  = withTable ? tableName : null, 
                     Field  = columnName,
                     Escape = true
                 });
@@ -703,6 +706,24 @@ public class Query<DBQueryType> : Renderable
     }
 
     /// <summary>
+    /// Adds a UNION clause to the query using the query action and union type.
+    /// </summary>
+    /// <param name="action">The action to populate the DBQueryType object.</param>
+    /// <param name="type">The type of union operation (e.g., UNION, UNION ALL, INTERSECT, EXCEPT).</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Union(Action<Query<DBQueryType>> action, UnionType type = UnionType.UNION) {
+        DBQueryType query = GetInstance();
+        if (action != null) {
+            action.Invoke(query);
+        }
+
+        return this.Union(new Union<DBQueryType>() {
+            Query = query,
+            Type  = type
+        });
+    }
+
+    /// <summary>
     /// Adds a UNION ALL clause to the query using the specified query.
     /// </summary>
     /// <param name="query">The query to union with the current query using UNION ALL.</param>
@@ -710,7 +731,24 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType UnionAll(DBQueryType query) {
         return this.Union(new Union<DBQueryType>() {
             Query = query,
-            Type = UnionType.UNION_ALL
+            Type  = UnionType.UNION_ALL
+        });
+    }
+
+    /// <summary>
+    /// Adds a UNION ALL clause to the query using the specified action and union type.
+    /// </summary>
+    /// <param name="action">The action to populate the DBQueryType object.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType UnionAll(Action<Query<DBQueryType>> action) {
+        DBQueryType query = GetInstance();
+        if (action != null) {
+            action.Invoke(query);
+        }
+
+        return this.Union(new Union<DBQueryType>() {
+            Query = query,
+            Type  = UnionType.UNION_ALL
         });
     }
 
@@ -722,7 +760,24 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Intersect(DBQueryType query) {
         return this.Union(new Union<DBQueryType>() {
             Query = query,
-            Type = UnionType.INTERSECT
+            Type  = UnionType.INTERSECT
+        });
+    }
+
+    /// <summary>
+    /// Adds an INTERSECT clause to the query using the specified query.
+    /// </summary>
+    /// <param name="action">The action to populate the DBQueryType object.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Intersect(Action<Query<DBQueryType>> action) {
+        DBQueryType query = GetInstance();
+        if (action != null) {
+            action.Invoke(query);
+        }
+
+        return this.Union(new Union<DBQueryType>() {
+            Query = query,
+            Type  = UnionType.INTERSECT
         });
     }
 
@@ -734,7 +789,24 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Except(DBQueryType query) {
         return this.Union(new Union<DBQueryType>() {
             Query = query,
-            Type = UnionType.EXCEPT
+            Type  = UnionType.EXCEPT
+        });
+    }
+
+    /// <summary>
+    /// Adds an EXCEPT clause to the query using the specified query.
+    /// </summary>
+    /// <param name="action">The action to populate the DBQueryType object.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Except(Action<Query<DBQueryType>> action) {
+        DBQueryType query = GetInstance();
+        if (action != null) {
+            action.Invoke(query);
+        }
+
+        return this.Union(new Union<DBQueryType>() {
+            Query = query,
+            Type  = UnionType.EXCEPT
         });
     }
 
@@ -979,6 +1051,23 @@ public class Query<DBQueryType> : Renderable
 
         this.Touch();
         return (DBQueryType) this;
+    }
+    /// <summary>
+    /// Adds a FROM clause to the query.
+    /// </summary>
+    /// <param name="action">The action to populate the DBQueryType object.</param>
+    /// <param name="alias">The subquery alias.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType From(Action<Query<DBQueryType>> action, string alias = "") {
+        DBQueryType query = GetInstance();
+        if (action != null) {
+            action.Invoke(query);
+        }
+
+        return this.From(new QueryBuilding.From<DBQueryType> {
+            Subquery   = query,
+            TableAlias = alias
+        });
     }
 
     /// <summary>
@@ -1354,7 +1443,7 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereGreater<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = ReflectionCache.GetTableName<T>();
@@ -1446,11 +1535,35 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="columnName">The column name.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereGreater<T>(string columnName, dynamic value, bool escape = true) where T : class {
         columnName = ReflectionCache.GetColumnName<T>(columnName);
 
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.GREATER,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the GREATER THAN comparer.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the value.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreater(string columnName, dynamic value, bool escape = true) {
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new Where<DBQueryType> {
                 Field = new FieldSelector {
@@ -1474,7 +1587,7 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereGreaterEquals<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = ReflectionCache.GetTableName<T>();
@@ -1559,7 +1672,6 @@ public class Query<DBQueryType> : Renderable
         return (DBQueryType)this;
     }
 
-
     /// <summary>
     /// Adds a WHERE clause for a property using a column name string and the GREATER OR EQUAL comparer.
     /// This method should be used when using a column without the table prefix.
@@ -1567,11 +1679,35 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="columnName">The column name.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereGreaterEquals<T>(string columnName, dynamic value, bool escape = true) where T : class {
         columnName = ReflectionCache.GetColumnName<T>(columnName);
 
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.GREATER_EQUALS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the GREATER OR EQUAL comparer.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the value.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereGreaterEquals(string columnName, dynamic value, bool escape = true) {
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new Where<DBQueryType> {
                 Field = new FieldSelector {
@@ -1595,7 +1731,7 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereLower<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = ReflectionCache.GetTableName<T>();
@@ -1687,11 +1823,35 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="columnName">The column name.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereLower<T>(string columnName, dynamic value, bool escape = true) where T : class {
         columnName = ReflectionCache.GetColumnName<T>(columnName);
 
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.LOWER,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the LOWER comparer.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the value.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLower(string columnName, dynamic value, bool escape = true) {
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new Where<DBQueryType> {
                 Field = new FieldSelector {
@@ -1715,7 +1875,7 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereLowerEquals<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = ReflectionCache.GetTableName<T>();
@@ -1807,11 +1967,35 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="columnName">The column name.</param>
     /// <param name="value">The value to compare.</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereLowerEquals<T>(string columnName, dynamic value, bool escape = true) where T : class {
         columnName = ReflectionCache.GetColumnName<T>(columnName);
 
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.LOWER_EQUALS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the LOWER OR EQUAL comparer.
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare.</param>
+    /// <param name="escape">Whether to escape the value.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereLowerEquals(string columnName, dynamic value, bool escape = true) {
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new Where<DBQueryType> {
                 Field = new FieldSelector {
@@ -1835,7 +2019,7 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare (e.g., null or boolean).</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereIs<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = ReflectionCache.GetTableName<T>();
@@ -1927,11 +2111,35 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="columnName">The column name.</param>
     /// <param name="value">The value to compare (e.g., null or boolean).</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereIs<T>(string columnName, dynamic value, bool escape = true) where T : class {
         columnName = ReflectionCache.GetColumnName<T>(columnName);
 
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.IS,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the IS comparer (e.g., IS NULL, IS TRUE).
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare (e.g., null or boolean).</param>
+    /// <param name="escape">Whether to escape the value.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIs(string columnName, dynamic value, bool escape = true) {
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new Where<DBQueryType> {
                 Field = new FieldSelector {
@@ -1955,7 +2163,7 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="expression">The property expression.</param>
     /// <param name="value">The value to compare (e.g., null or boolean).</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereIsNot<T>(Expression<Func<T, object>> expression, dynamic value, bool escape = true) where T : class {
         string tableName  = ReflectionCache.GetTableName<T>();
@@ -2047,11 +2255,35 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="T">The table type.</typeparam>
     /// <param name="columnName">The column name.</param>
     /// <param name="value">The value to compare (e.g., null or boolean).</param>
-    /// <param name="escape">Whether to escape the column.</param>
+    /// <param name="escape">Whether to escape the value.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType WhereIsNot<T>(string columnName, dynamic value, bool escape = true) where T : class {
         columnName = ReflectionCache.GetColumnName<T>(columnName);
 
+        if (!string.IsNullOrWhiteSpace(columnName)) {
+            return this.Where(new Where<DBQueryType> {
+                Field = new FieldSelector {
+                    Field  = columnName,
+                    Escape = true
+                },
+                Comparer    = WhereComparer.IS_NOT,
+                Value       = value,
+                EscapeValue = escape
+            });
+        }
+
+        return (DBQueryType)this;
+    }
+
+    /// <summary>
+    /// Adds a WHERE clause for a property using a column name string and the IS NOT comparer (e.g., IS NOT NULL).
+    /// This method should be used when using a column without the table prefix.
+    /// </summary>
+    /// <param name="columnName">The column name.</param>
+    /// <param name="value">The value to compare (e.g., null or boolean).</param>
+    /// <param name="escape">Whether to escape the value.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereIsNot(string columnName, dynamic value, bool escape = true) {
         if (!string.IsNullOrWhiteSpace(columnName)) {
             return this.Where(new Where<DBQueryType> {
                 Field = new FieldSelector {
@@ -2674,32 +2906,35 @@ public class Query<DBQueryType> : Renderable
     /// <returns>The corresponding <see cref="ColumnDataType"/>, or null if not found.</returns>
     public ColumnDataType? GetColumnDataType(string typeString) {
         return typeString.ToLowerInvariant() switch {
-            "bool"      => ColumnDataType.Boolean,
-            "boolean"   => ColumnDataType.Boolean,
-            "int16"     => ColumnDataType.Int16,
-            "int"       => ColumnDataType.Int,
-            "int32"     => ColumnDataType.Int32,
-            "int64"     => ColumnDataType.Int64,
-            "uint16"    => ColumnDataType.UInt16,
-            "uint32"    => ColumnDataType.UInt32,
-            "uint"      => ColumnDataType.UInt,
-            "uint64"    => ColumnDataType.UInt64,
-            "decimal"   => ColumnDataType.Decimal,
-            "float"     => ColumnDataType.Float,
-            "double"    => ColumnDataType.Double,
-            "text"      => ColumnDataType.Text,
-            "char"      => ColumnDataType.Char,
-            "varchar"   => ColumnDataType.Varchar,
-            "enum"      => ColumnDataType.Enum,
-            "date"      => ColumnDataType.Date,
-            "datetime"  => ColumnDataType.DateTime,
-            "time"      => ColumnDataType.Time,
-            "timestamp" => ColumnDataType.Timestamp,
-            "binary"    => ColumnDataType.Binary,
-            "guid"      => ColumnDataType.Guid,
-            "uuid"      => ColumnDataType.Guid,
-            "json"      => ColumnDataType.Json,
-            "xml"       => ColumnDataType.Xml,
+            "bool"       => ColumnDataType.Boolean,
+            "boolean"    => ColumnDataType.Boolean,
+            "int16"      => ColumnDataType.Int16,
+            "int"        => ColumnDataType.Int,
+            "int32"      => ColumnDataType.Int32,
+            "int64"      => ColumnDataType.Int64,
+            "uint16"     => ColumnDataType.UInt16,
+            "uint32"     => ColumnDataType.UInt32,
+            "uint"       => ColumnDataType.UInt,
+            "uint64"     => ColumnDataType.UInt64,
+            "decimal"    => ColumnDataType.Decimal,
+            "float"      => ColumnDataType.Float,
+            "double"     => ColumnDataType.Double,
+            "tiny"       => ColumnDataType.TinyText,
+            "text"       => ColumnDataType.Text,
+            "mediumtext" => ColumnDataType.MediumText,
+            "longtext"   => ColumnDataType.LongText,
+            "char"       => ColumnDataType.Char,
+            "varchar"    => ColumnDataType.Varchar,
+            "enum"       => ColumnDataType.Enum,
+            "date"       => ColumnDataType.Date,
+            "datetime"   => ColumnDataType.DateTime,
+            "time"       => ColumnDataType.Time,
+            "timestamp"  => ColumnDataType.Timestamp,
+            "binary"     => ColumnDataType.Binary,
+            "guid"       => ColumnDataType.Guid,
+            "uuid"       => ColumnDataType.Guid,
+            "json"       => ColumnDataType.Json,
+            "xml"        => ColumnDataType.Xml,
 
             _ => null
         };
