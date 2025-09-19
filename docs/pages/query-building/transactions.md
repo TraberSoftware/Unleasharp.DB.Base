@@ -17,10 +17,9 @@ The Query Builder supports the following transaction methods:
 ## Basic Usage
 
 ```csharp
-QueryBuilder queryBuilder = dbConnector.QueryBuilder();
-queryBuilder.Begin();
+dbConnector.QueryBuilder().Begin();
 // Insert data
-if (queryBuilder.Build(query => query
+if (dbConnector.QueryBuilder().Build(query => query
     .Into<ExampleTable>()
     .Value(new ExampleTable {
         MediumText = "Inserted from a transaction",
@@ -28,11 +27,11 @@ if (queryBuilder.Build(query => query
     .Insert()
 ).Execute<bool>()) {
     // Commit on query success
-    queryBuilder.Commit();
+    dbConnector.QueryBuilder().Commit();
 }
 else {
     // Rollback on query failure
-    queryBuilder.Rollback();
+    dbConnector.QueryBuilder().Rollback();
 }
 ```
 
@@ -42,10 +41,9 @@ else {
 In MSSQL, named transactions provide a way to explicitly name transaction blocks, making it easier to manage and debug complex transactional operations. When using named transactions, you can reference specific transaction names for commit or rollback operations.
 
 ```csharp
-QueryBuilder queryBuilder = dbConnector.QueryBuilder();
-queryBuilder.Begin("transaction_name");
+dbConnector.QueryBuilder().Begin("transaction_name");
 // Insert data
-if (queryBuilder.Build(query => query
+if (dbConnector.QueryBuilder().Build(query => query
     .Into<ExampleTable>()
     .Value(new ExampleTable {
         MediumText = "Inserted from a transaction",
@@ -53,10 +51,10 @@ if (queryBuilder.Build(query => query
     .Insert()
 ).Execute<bool>()) {
     // Commit on query success
-    queryBuilder.Commit("transaction_name");
+    dbConnector.QueryBuilder().Commit("transaction_name");
 }
 else {
     // Rollback on query failure
-    queryBuilder.Rollback("transaction_name");
+    dbConnector.QueryBuilder().Rollback("transaction_name");
 }
 ```
