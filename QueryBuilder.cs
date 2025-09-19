@@ -336,13 +336,13 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <item><description>The primary key value must be present in the cached data.</description></item>
     /// </list>
     /// If these conditions are not met, the method returns <see langword="false"/>  without performing any updates.</remarks>
-    /// <param name="row">The row object to be updated. The object must represent a valid database row and include a primary key value.</param>
+    /// <param name="row">The row object to be updated. The object must represent a valid database row and include a primary or unique key value.</param>
     /// <returns><see langword="true"/> if the row was successfully updated; otherwise, <see langword="false"/>.</returns>
     public bool Update(object row) {
         ResultCacheRow cached = ResultCache.Get(row.GetHashCode());
 
         if (cached != null) {
-            Dictionary<string, object> rowData = row.ToDynamicDictionary();
+            Dictionary<string, object> rowData    = row.ToDynamicDictionary();
             Dictionary<string, object> rowChanges = cached.Data.CompareWith(rowData);
 
             if (rowChanges.Count > 0) {
@@ -350,8 +350,12 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
                     // Can't update a row for a table without a Primary Key
                     return false;
                 }
-                if (!cached.Data.ContainsKey(cached.KeyColumnName)) {
-                    // Can't update a row if we don't have the Primary Key value
+                if (!cached.Data.ContainsKey(cached.KeyColumnName) || cached.KeyColumnName == null) {
+                    // Can't update a row if we don't have the Primary Key value or it is null
+                    return false;
+                }
+                if (string.IsNullOrWhiteSpace(cached.Data[cached.KeyColumnName].ToString())) {
+                    // Can't update a row if Primary Key value is empty or null
                     return false;
                 }
 
