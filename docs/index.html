@@ -873,9 +873,9 @@
                             &nbsp;&nbsp;Age = 30<br>
                             };<br><br>
                             <span class="keyword">var</span> id = db.<span class="function">QueryBuilder</span>().<span class="function">Build</span>(query => query<br>
-                            &nbsp;&nbsp;.<span class="function">Insert</span>&lt;<span class="type">User</span>&gt;(user)<br>
-                            &nbsp;&nbsp;.<span class="function">Execute</span>&lt;<span class="type">long</span>&gt;()<br>
-                            );<br>
+                            &nbsp;&nbsp;.<span class="function">Into</span>&lt;<span class="type">User</span>&gt;()<br>
+                            &nbsp;&nbsp;.<span class="function">Value</span>&lt;<span class="type">User</span>&gt;(user)<br>
+                            ).<span class="function">Execute</span>&lt;<span class="type">long</span>&gt;();<br>
                         </div>
                     </div>
                 </div>
