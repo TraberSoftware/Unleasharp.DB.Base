@@ -6,16 +6,42 @@ outline: deep
 
 ## Namespace Imports
 
-```csharp
+::: code-group
+```csharp [MySQL]
 // Main QueryBuilding Namespace - Required for advanced operations
 using Unleasharp.DB.Base.QueryBuilding;
-
-// Specific database engine implementation
-using Unleasharp.DB.SQLite;         // For SQLite
-// using Unleasharp.DB.MySQL;       // For MySQL  
-// using Unleasharp.DB.PostgreSQL;  // For PostgreSQL
-// using Unleasharp.DB.MSSQL;       // For Microsoft SQL
+// Database engine Query Builder Namespace
+using Unleasharp.DB.MySQL;
 ```
+
+```csharp [SQLite]
+// Main QueryBuilding Namespace - Required for advanced operations
+using Unleasharp.DB.Base.QueryBuilding;
+// Database engine Query Builder Namespace
+using Unleasharp.DB.SQLite;
+```
+
+```csharp [PostgreSQL]
+// Main QueryBuilding Namespace - Required for advanced operations
+using Unleasharp.DB.Base.QueryBuilding;
+// Database engine Query Builder Namespace
+using Unleasharp.DB.PostgreSQL;
+```
+
+```csharp [MSSQL]
+// Main QueryBuilding Namespace - Required for advanced operations
+using Unleasharp.DB.Base.QueryBuilding;
+// Database engine Query Builder Namespace
+using Unleasharp.DB.MSSQL;
+```
+
+```csharp [DuckDB]
+// Main QueryBuilding Namespace - Required for advanced operations
+using Unleasharp.DB.Base.QueryBuilding;
+// Database engine Query Builder Namespace
+using Unleasharp.DB.DuckDB;
+```
+:::
 
 > 📝 **Note**: The `QueryBuilding` namespace is only required for advanced operations. Basic functionality works without it.
 
@@ -25,26 +51,71 @@ There are multiple ways to initialize the ConnectorManager.
 
 ### Basic Setup
 
-```csharp
-// Initialize database connection
-ConnectorManager dbConnector = new ConnectorManager("Data Source=unleasharp.db;Version=3;");
+::: code-group
+```csharp [MySQL]
+ConnectorManager dbConnector = new ConnectorManager(
+    "Server=localhost;Database=unleasharp;Uid=unleasharp;Pwd=unleasharp;"
+);
 ```
+
+```csharp [SQLite]
+ConnectorManager dbConnector = new ConnectorManager(
+    "Data Source=unleasharp.db;Version=3;"
+);
+```
+
+```csharp [PostgreSQL]
+ConnectorManager dbConnector = new ConnectorManager(
+    "Host=localhost;Port=5432;Database=unleasharp;Username=unleasharp;Password=unleasharp;"
+);
+```
+
+```csharp [MSSQL]
+ConnectorManager dbConnector = new ConnectorManager(
+    "Data Source=localhost;Database=unleasharp;User ID=unleasharp;Password=unleasharp;Integrated Security=false;Encrypt=True;TrustServerCertificate=True"
+);
+```
+
+```csharp [DuckDB]
+ConnectorManager dbConnector = new ConnectorManager(
+    "Data Source=unleasharp.duckdb"
+);
+```
+:::
 
 ### Using ConnectionStringBuilder
 
 Each database implementation has its own `ConnectionStringBuilder`. You can provide an engine-specific `ConnectionStringBuilder` object to the `ConnectorManager` constructor.
 
-```csharp
-// MySQL example
-ConnectorManager dbConnector = new ConnectorManager(
-    new MySqlConnectionStringBuilder("Server=localhost;Database=unleasharp;Uid=unleasharp;Pwd=unleasharp;")
-);
-
-// PostgreSQL example
-ConnectorManager dbConnector = new ConnectorManager(
-    new NpgsqlConnectionStringBuilder("Host=localhost;Port=5432;Database=unleasharp;Username=unleasharp;Password=unleasharp;")
-);
+::: code-group
+```csharp [MySQL]
+ConnectorManager dbConnector = new ConnectorManager(new MySqlConnectionStringBuilder(
+    "Server=localhost;Database=unleasharp;Uid=unleasharp;Pwd=unleasharp;"
+));
 ```
+
+```csharp [SQLite]
+ConnectorManager dbConnector = new ConnectorManager(new SQLiteConnectionStringBuilder(
+    "Data Source=unleasharp.db;Version=3;"
+));
+```
+
+```csharp [PostgreSQL]
+ConnectorManager dbConnector = new ConnectorManager(new NpgsqlConnectionStringBuilder(
+    "Host=localhost;Port=5432;Database=unleasharp;Username=unleasharp;Password=unleasharp;"
+));
+```
+
+```csharp [MSSQL]
+ConnectorManager dbConnector = new ConnectorManager(new SqlConnectionStringBuilder(
+    "Data Source=localhost;Database=unleasharp;User ID=unleasharp;Password=unleasharp;Integrated Security=false;Encrypt=True;TrustServerCertificate=True"
+));
+```
+
+```csharp [DuckDB]
+// DuckDB does not allow to initialize a DuckDBConnectionStringBuilder with a Connection String
+```
+:::
 
 ### Fluent Configuration
 
@@ -99,5 +170,13 @@ ConnectorManager dbConnector = new ConnectorManager(new NpgsqlDataSourceBuilder(
 // Create the PostgreSQL Enum type based on the C# Enum type if it doesn't exist already
 dbConnector.QueryBuilder().Build(query => query.CreateEnumType<EnumExample>()).Execute();
 ```
-
 > ⚠️ **Note**: When creating the Enum type using the previous method, given Enum will not be mapped to PostgreSQL Enum in the ConnectorManager, it will require re-instantiating it or resetting the application. A future workaround should improve this behaviour.
+
+### DuckDB
+
+DuckDB can also define Enums as specific types, but they don't require to be maped to C# Enum types.
+
+```csharp
+// Create the DuckDB Enum type based on the C# Enum type if it doesn't exist already
+dbConnector.QueryBuilder().Build(query => query.CreateEnumType<EnumExample>()).Execute();
+```

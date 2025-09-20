@@ -58,16 +58,15 @@ https://duckdb.org/docs/stable/data/csv/overview#parameters
 
 The examples below use the provided sample flights.csv and a simple Unleasharp.DB mapping class.
 
-> flights.csv
-```
+::: code-group
+```csv [flights.csv]
 FlightDate|UniqueCarrier|OriginCityName|DestCityName
 1988-01-01|AA|New York, NY|Los Angeles, CA
 1988-01-02|AA|New York, NY|Los Angeles, CA
 1988-01-03|AA|New York, NY|Los Angeles, CA
 ```
 
-> Flights.cs
-```csharp
+```csharp [Flights.cs]
 [Table("flights")]
 public class Flights {
     [Column("FlightDate", ColumnDataType.Date)]
@@ -83,7 +82,7 @@ public class Flights {
     public string   DestCityName   { get; set; }
 }
 ```
-
+:::
 
 ### CSV to Table
 

@@ -16,21 +16,35 @@ The `Select()` method syntax is very simple:
 ## Data Retrieval Methods
 
 ### FirstOrDefault()
-Retrieves the first result of the query.
+Retrieves the first result of the query. If no `Limit()` has been previously set, it will automatically set the `Limit()` to 1.
 
-```csharp
+::: code-group
+```csharp [C#]
 // Select first row with ordering
 ExampleTable row = dbConnector.QueryBuilder().Build(query => query 
     .Select()
     .From<ExampleTable>()
     .OrderBy("id", OrderDirection.DESC)
-    .Limit(1)
 ).FirstOrDefault<ExampleTable>();
 ```
 
+```sql [SQL]
+SELECT
+    *
+FROM
+    "example_table"
+ORDER BY
+    "id" DESC
+LIMIT
+    0, 1
+```
+:::
+
 ### ToList()
 Returns a `List<T>` result of the query.
-```csharp
+
+::: code-group
+```csharp [C#]
 List<example_table> rows = dbConnector.QueryBuilder().Build(query => query
     .Select()
     .From("example_table")
@@ -38,10 +52,21 @@ List<example_table> rows = dbConnector.QueryBuilder().Build(query => query
 ).ToList<example_table>();
 ```
 
+```sql [SQL]
+SELECT
+    *
+FROM
+    "example_table"
+ORDER BY
+    "id" DESC
+```
+:::
+
 ### AsEnumerable()
 Returns an `IEnumerable<T>` result of the query. This method won't automatically iterate the table, but the result set retrieved by the executed query.
 
-```csharp
+::: code-group
+```csharp [C#]
 foreach (ExampleTable row in dbConnector.QueryBuilder().Build(query => query
     .Select()
     .From<ExampleTable>()
@@ -51,17 +76,50 @@ foreach (ExampleTable row in dbConnector.QueryBuilder().Build(query => query
 }
 ```
 
+
+```sql [SQL]
+SELECT
+    *
+FROM
+    "example_table"
+ORDER BY
+    "id" DESC
+LIMIT 
+    0, 10
+```
+:::
+
 ### Iterate()
 The `Iterate()` method will iterate over all rows of the table by using the provided column as the AutoIncrement ID column, for incremental retrieval. LIMIT-OFFSET could be used for this operation, but the performance quickly degrades over large results.
 
-```csharp
+::: code-group
+```csharp [C#]
 foreach (ExampleTable row in dbConnector.QueryBuilder().Iterate<ExampleTable>(row => row.Id)) {
     // Do things to row
 }
 ```
 
+```sql [SQL]
+SELECT
+    "example_table"."id",
+    "example_table"."_mediumtext",
+    "example_table"."_longtext",
+    "example_table"."_json",
+    "example_table"."_longblob",
+    "example_table"."_enum",
+    "example_table"."_varchar"
+FROM
+    "example_table"
+WHERE
+    "example_table"."id">0
+LIMIT
+    0, 100
+```
+:::
+
 The iterator supports building complex queries with existing conditions:
-```csharp
+::: code-group
+```csharp [C#]
 foreach (ExampleTable row in dbConnector.QueryBuilder().Build(query => 
     query.WhereLike<ExampleTable>(row => row.MediumText, "%Edited%")
 ).Iterate<ExampleTable>(row => row.Id)) {
@@ -69,8 +127,29 @@ foreach (ExampleTable row in dbConnector.QueryBuilder().Build(query =>
 }
 ```
 
+```sql [SQL]
+SELECT
+    "example_table"."id",
+    "example_table"."_mediumtext",
+    "example_table"."_longtext",
+    "example_table"."_json",
+    "example_table"."_longblob",
+    "example_table"."_enum",
+    "example_table"."_varchar"
+FROM
+    "example_table"
+WHERE
+    "example_table"."_mediumtext" LIKE '%Edited%'
+    AND 
+    "example_table"."id">0
+LIMIT
+    0, 100
+```
+:::
+
 Customize iteration with offset and batch size parameters:
-```csharp
+::: code-group
+```csharp [C#]
 long offset    = 100;
 int  batchSize = 50;
 foreach (ExampleTable row in dbConnector.QueryBuilder().Build(query => 
@@ -79,3 +158,23 @@ foreach (ExampleTable row in dbConnector.QueryBuilder().Build(query =>
     // Do things to row
 }
 ```
+
+```sql [SQL]
+SELECT
+    "example_table"."id",
+    "example_table"."_mediumtext",
+    "example_table"."_longtext",
+    "example_table"."_json",
+    "example_table"."_longblob",
+    "example_table"."_enum",
+    "example_table"."_varchar"
+FROM
+    "example_table"
+WHERE
+    "example_table"."_mediumtext" LIKE '%Edited%'
+    AND
+    "example_table"."id">100
+LIMIT
+    0, 50
+```
+:::

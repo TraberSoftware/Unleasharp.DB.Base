@@ -16,7 +16,8 @@ The Query class follows intuitive, SQL-like syntax:
 
 This makes query construction feel natural and fluent:
 
-```csharp
+::: code-group
+```csharp [C#]
 new Query()
     .Select()
     .From("my_table")
@@ -25,6 +26,20 @@ new Query()
     .OrderBy("id")
 ;
 ```
+
+```sql [SQL]
+SELECT
+	*
+FROM
+	"my_table"
+WHERE
+	"column" = 'column_value'
+ORDER BY
+	"id" ASC
+LIMIT
+	0, 5
+```
+:::
 
 However, we need first to learn a few key elements to perform queries using Unleasharp.DB.
 
@@ -40,15 +55,27 @@ In order to build future-proof queries that rely on class entries instead of str
 
 Query expressions provide type safety and automatic maintenance:
 
-```csharp
+::: code-group
+```csharp [C#]
 new Query()
     .From <ExampleTable>()
     .Set  <ExampleTable>((row) => row.MediumText, "Edited medium text")
     .Set  <ExampleTable>((row) => row.Longtext,   "Edited long text")
-    .Where<ExampleTable>((row) => row.Id,         row.Id)
+    .Where<ExampleTable>((row) => row.Id,         3)
     .Update()
 ;
 ```
+
+```sql [SQL]
+UPDATE
+	"example_table"
+SET
+	"_mediumtext" = 'Edited medium text',
+	"_longtext"   = 'Edited long text'
+WHERE
+	"example_table"."id" = 3
+```
+:::
 
 > ✅ **Recommendation**: Use Query Expressions instead of string literals for better maintainability and refactoring support.
 
@@ -56,7 +83,9 @@ new Query()
 The `QueryBuilder` class does not really perform the query building but holds an active query and the DB connection, and acts as bridge between the `Query` class and the database engine. There are multiple ways to build queries:
 
 ### Standalone Query
-```csharp
+
+::: code-group
+```csharp [C#]
 Query query = new Query()
     .Select()
     .From<ExampleTable>()
@@ -66,8 +95,22 @@ Query query = new Query()
 QueryBuilder builder = dbConnector.QueryBuilder(query);
 ```
 
+```sql [SQL]
+SELECT
+	*
+FROM
+	"example_table"
+ORDER BY
+	"id" DESC
+LIMIT
+	0, 1
+```
+:::
+
 ### Built-in Build Method (Recommended)
-```csharp
+
+::: code-group
+```csharp [C#]
 QueryBuilder builder = dbConnector.QueryBuilder().Build(query => query
     .Select()
     .From<example_table>()
@@ -76,8 +119,21 @@ QueryBuilder builder = dbConnector.QueryBuilder().Build(query => query
 );
 ```
 
+```sql [SQL]
+SELECT
+	*
+FROM
+	"example_table"
+ORDER BY
+	"id" DESC
+LIMIT
+	0, 1
+```
+:::
+
 With the `QueryBuilder` setup with an active query, you can then retrieve the results or execute the query.
-```csharp
+::: code-group
+```csharp [C#]
 QueryBuilder builder = dbConnector.QueryBuilder().Build(query => query
     .Select()
     .From<example_table>()
@@ -86,6 +142,18 @@ QueryBuilder builder = dbConnector.QueryBuilder().Build(query => query
 );
 example_table row = builder.FirstOrDefault<example_table>();
 ```
+
+```sql [SQL]
+SELECT
+	*
+FROM
+	"example_table"
+ORDER BY
+	"id" DESC
+LIMIT
+	0, 1
+```
+:::
 
 #### After-query Data
 After execution, the `QueryBuilder` provides these useful properties:

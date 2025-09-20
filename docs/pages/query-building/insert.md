@@ -14,7 +14,8 @@ To perform an insert, there must be a call to at least two methods:
 
 Insert a single row and retrieve the Auto-Increment ID as `long`.
 
-```csharp
+::: code-group
+```csharp [C#]
 long insertedId = dbConnector.QueryBuilder().Build(query => query
     .Insert()
     .Into<ExampleTable>()
@@ -25,11 +26,20 @@ long insertedId = dbConnector.QueryBuilder().Build(query => query
 ).Execute<long>();
 ```
 
+```sql
+INSERT INTO example_table 
+    (_mediumtext, _longtext, _json, _longblob, _enum, _varchar)
+VALUES
+    ('Medium text example value', NULL, NULL, NULL, 'NEGATIVE', NULL)
+```
+:::
+
 ## Multiple Rows
 
 You can either call `Value()` multiple times or call `Values()` and provide multiple values at the same time, or call both!
 
-```csharp
+::: code-group
+```csharp [C#]
 dbConnector.QueryBuilder().Build(query => query
     .Into<ExampleTable>()
     .Value(new ExampleTable {
@@ -51,12 +61,32 @@ dbConnector.QueryBuilder().Build(query => query
 ).Execute();
 ```
 
+```sql [SQL]
+INSERT INTO example_table 
+    (_mediumtext, _longtext, _json, _longblob, _enum, _varchar)
+VALUES
+    ('Medium text example value', NULL, NULL, NULL, 'NEGATIVE', NULL),
+    (NULL, NULL, '{"sample_json_field": "sample_json_value"}', '0x512F0F150C101727', 'Y', NULL),
+    (NULL, 'Long text example value', NULL, NULL, 'NEGATIVE', NULL)
+```
+:::
+
 > ⚠️ **Critical**: Do **not mix rows with and without primary key values** in the same batch.
 
 ❌ **Dangerous**:
-```csharp
+::: code-group
+```csharp [C#]
 .Values(new List<ExampleTable> {
     new ExampleTable { Id = 1, Longtext = "Bad!"  }, // ❌ Don't set ID manually!
     new ExampleTable {         Longtext = "Good!" }
 })
 ```
+
+```sql [SQL]
+INSERT INTO example_table 
+    (id, _mediumtext, _longtext, _json, _longblob, _enum, _varchar)
+VALUES
+  (1, NULL, 'Bad!', NULL, NULL, NULL, NULL),
+  (NULL, NULL, 'Good!', NULL, NULL, NULL, NULL)
+```
+:::

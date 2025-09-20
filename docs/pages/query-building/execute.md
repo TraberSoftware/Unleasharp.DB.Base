@@ -15,7 +15,8 @@ Use `Execute<T>()` to return specific results:
 | `bool`                               | Whether any row was affected (`AffectedRows > 0`) or exists |
 
 ## Last Insert ID
-```csharp
+::: code-group
+```csharp [C#]
 string lastInsertId = dbConnector.QueryBuilder().Build(query => query
     .From<ChildTable>()
     .Value(new ChildTable {
@@ -25,12 +26,22 @@ string lastInsertId = dbConnector.QueryBuilder().Build(query => query
     .Insert()
 ).Execute<string>();
 ```
+
+```sql [SQL]
+INSERT INTO child_table 
+	(parent_id, example_field)
+VALUES
+	(1, 'Example Field Value')
+```
+:::
+
 > 📝 **Note**: Some database engines can define a GUID filed as Identifier, you can either return a `string` or numeric types `int`,`long`,`uint`,`ulong` depending on the table definition itself.
 
 ## Affected rows
 The affected rows count comes useful when performing multiple inserts, as well as updates or deletions.
 
-```csharp
+::: code-group
+```csharp [C#]
 int affectedRows = dbConnector.QueryBuilder().Build(query => query
     .From<ExampleTable>()
     .Value(new ExampleTable {
@@ -52,10 +63,22 @@ int affectedRows = dbConnector.QueryBuilder().Build(query => query
 ).Execute<int>();
 ```
 
+```sql [SQL]
+INSERT INTO example_table 
+	(_mediumtext, _longtext, _json, _longblob,_enum, _varchar)
+VALUES
+	('Medium text example value', NULL, NULL, NULL, 'NEGATIVE', NULL),
+	(NULL, NULL, '{"sample_json_field": "sample_json_value"}', '0x512F0F150C101727', 'Y', NULL),
+	(NULL, 'Long text example value', NULL, NULL, 'NEGATIVE', NULL)
+```
+:::
+
 ## Success Check (Boolean)
 When setting `T` as `boolean`, the query will check for success by checking the number of affected rows, the exceptions thrown during the execution, etc.
 
-```csharp
+::: code-group
+
+```csharp [C#]
 bool inserted = dbConnector.QueryBuilder().Build(query => query
     .From<ChildTable>()
     .Value(new ChildTable {
@@ -65,3 +88,12 @@ bool inserted = dbConnector.QueryBuilder().Build(query => query
     .Insert()
 ).Execute<bool>();
 ```
+
+```sql [SQL]
+INSERT INTO child_table 
+	(parent_id, example_field)
+VALUES
+	(1, 'Example Field Value')
+```
+
+:::

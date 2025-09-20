@@ -22,7 +22,8 @@ The following methods support union operations:
 
 ### Simple Union
 
-```csharp
+::: code-group
+```csharp [C#]
 List<ExampleTable> unionRows = dbConnector.QueryBuilder().Build(query => query
     .Select()
     .Union(query => query
@@ -40,9 +41,43 @@ List<ExampleTable> unionRows = dbConnector.QueryBuilder().Build(query => query
 ).ToList<ExampleTable>();
 ```
 
+```sql [SQL]
+SELECT
+    "example_table"."id",
+    "example_table"."_mediumtext",
+    "example_table"."_longtext",
+    "example_table"."_json",
+    "example_table"."_longblob",
+    "example_table"."_enum",
+    "example_table"."_varchar"
+FROM
+    "example_table"
+WHERE
+    "example_table"."id"<=10
+UNION
+SELECT
+    "example_table"."id",
+    "example_table"."_mediumtext",
+    "example_table"."_longtext",
+    "example_table"."_json",
+    "example_table"."_longblob",
+    "example_table"."_enum",
+    "example_table"."_varchar"
+FROM
+    "example_table"
+WHERE
+    "example_table"."id">10
+    AND
+    "example_table"."id"<=20
+ORDER BY
+    "id" ASC
+```
+:::
+
 ### Union as Subselect
 
-```csharp
+::: code-group
+```csharp [C#]
 List<ExampleTable> unionRows = dbConnector.QueryBuilder().Build(query => query
     .From(query => query
         .Select()
@@ -62,3 +97,40 @@ List<ExampleTable> unionRows = dbConnector.QueryBuilder().Build(query => query
     .Select()
 ).ToList<ExampleTable>();
 ```
+
+```sql [SQL]
+SELECT
+    *
+FROM (
+    SELECT
+        "example_table"."id",
+        "example_table"."_mediumtext",
+        "example_table"."_longtext",
+        "example_table"."_json",
+        "example_table"."_longblob",
+        "example_table"."_enum",
+        "example_table"."_varchar"
+    FROM
+        "example_table"
+    WHERE
+        "example_table"."id"<=10
+    UNION
+    SELECT
+        "example_table"."id",
+        "example_table"."_mediumtext",
+        "example_table"."_longtext",
+        "example_table"."_json",
+        "example_table"."_longblob",
+        "example_table"."_enum",
+        "example_table"."_varchar"
+    FROM
+        "example_table"
+    WHERE
+        "example_table"."id">10
+        AND
+        "example_table"."id"<=20
+) unioned
+ORDER BY
+    "id" ASC
+```
+:::
