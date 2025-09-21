@@ -6,9 +6,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyVersion>1.8.0.0</AssemblyVersion>
-    <FileVersion>1.8.0</FileVersion>
-    <VersionPrefix>1.8.0</VersionPrefix>
+    <AssemblyVersion>1.8.2.0</AssemblyVersion>
+    <FileVersion>1.8.2</FileVersion>
+    <VersionPrefix>1.8.2</VersionPrefix>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -31,7 +31,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
     <PackageReference Include="System.Linq.Async" Version="6.0.3" />
-    <PackageReference Include="Unleasharp" Version="1.1.1" />
+    <PackageReference Include="Unleasharp" Version="1.1.2" />
   </ItemGroup>
 
   <ItemGroup>
