@@ -1,15 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using Unleasharp.DB.Base.ExtensionMethods;
 using Unleasharp.DB.Base.QueryBuilding;
@@ -210,8 +205,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.DBQuery   = Activator.CreateInstance<DBQueryType>();
 
         int rows = this.Result?.Rows?.Count ?? 0;
-        _logger.LogDebug("Query executed. Type: {QueryType}, AffectedRows: {AffectedRows}, ScalarValue: {Scalar}, LastInsertedId: {LastInsertedId}",
-            this.LastQuery?.QueryType, this.AffectedRows, this.ScalarValue, this.LastInsertedId);
+        _logger.LogDebug("Query executed. Type: {QueryType}, AffectedRows: {AffectedRows}, ScalarValue: {Scalar}, LastInsertedId: {LastInsertedId}, RetrievedRows: {RetrievedRows}",
+            this.LastQuery?.QueryType, this.AffectedRows, this.ScalarValue, this.LastInsertedId, rows);
 
         if (this.AfterQueryExecutionAction != null) {
             this.AfterQueryExecutionAction.Invoke(this.LastQuery);

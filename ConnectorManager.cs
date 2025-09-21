@@ -228,6 +228,9 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
                 if (!queryBuilder.InTransaction) {
                     this.__InitializeConnector(queryBuilder.Connector);
                 }
+                else {
+                    _logger.LogDebug("QueryBuilder for thread {ThreadId} is holding transactions, skip renewal checking", threadId);
+                }
             }
 
             // Instance does not exist, create it

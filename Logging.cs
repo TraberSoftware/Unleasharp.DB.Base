@@ -48,8 +48,9 @@ public static class Logging {
             builder.AddSimpleConsole(options => {
                 // Default good format
                 options.SingleLine      = true;
-                options.TimestampFormat = "yyyy-MM-dd HH:mm:ss.fff "; // 👈 ms precision
+                options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss.fff] "; // 👈 ms precision
                 options.UseUtcTimestamp = false;
+                options.IncludeScopes   = true;
 
                 // Allow external override if provided
                 _configureConsoleAction?.Invoke(options);
