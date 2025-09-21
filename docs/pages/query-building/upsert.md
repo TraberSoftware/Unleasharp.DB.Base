@@ -33,7 +33,7 @@ int insertedOrUpdatedItems = dbConnector.QueryBuilder().Build(query => { query
 
 ```sql [MySQL]
 INSERT INTO example_table 
-    (id, _mediumtext, _longtext, _json, _longblob, _enum, _varchar )
+    (id, _mediumtext, _longtext, _json, _longblob, _enum, _varchar)
 VALUES
     (1234, 'InsertOrUpdated', NULL, NULL, NULL, 'NEGATIVE', NULL) 
 ON DUPLICATE KEY UPDATE 
