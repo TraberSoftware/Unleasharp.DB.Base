@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -9,6 +10,22 @@ using Unleasharp.DB.Base.SchemaDefinition;
 namespace Unleasharp.DB.Base.ExtensionMethods;
 
 public static class ObjectExtensions {
+    /// <summary>
+    /// Creates a deep copy of the specified object, duplicating all nested objects and preserving the original object's
+    /// structure.
+    /// </summary>
+    /// <remarks>This method uses a high-performance cloning mechanism to create a deep copy of the object.
+    /// All nested objects and references are also cloned, ensuring that the returned object is fully independent of the
+    /// original.</remarks>
+    /// <typeparam name="T">The type of the object to clone. Must be a reference type.</typeparam>
+    /// <param name="obj">The object to clone. Can be <see langword="null"/>.</param>
+    /// <returns>A deep copy of the specified object. If <paramref name="obj"/> is <see langword="null"/>, the method returns
+    /// <see langword="null"/>.</returns>
+    [return: NotNullIfNotNull(nameof(obj))]
+    public static T? DeepClone<T>(this T? obj) {
+        return FastCloner.FastCloner.DeepClone(obj);
+    }
+
     /// <summary>
     /// Converts the specified object into a dictionary with string keys and dynamic values.
     /// </summary>

@@ -207,6 +207,10 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
         lock (_queryBuilderStackLock) {
             if (this._queryBuilderStack.ContainsKey(threadId)) {
                 queryBuilder = this._queryBuilderStack[threadId];
+                // Don't renew the connection if the Query Builder holds a transaction
+                if (!queryBuilder.InTransaction) {
+                    this.__InitializeConnector(queryBuilder.Connector);
+                }
             }
 
             // Instance does not exist, create it

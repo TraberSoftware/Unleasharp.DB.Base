@@ -98,6 +98,20 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     protected virtual string _TransactionRollbackQuery { get; set; } = "ROLLBACK TRANSACTION {0};";
 
     /// <summary>
+    /// Gets or sets a value indicating whether the current operation is holding a transaction.
+    /// </summary>
+    public bool InTransaction {
+        get {
+            return Transactions.Count > 0;
+        }
+    }
+
+    /// <summary>
+    /// Gets the collection of transaction identifiers associated with the current instance.
+    /// </summary>
+    public List<string> Transactions { get; protected set; } = new List<string>();
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="QueryBuilder{QueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType}"/> class with the specified connector.
     /// </summary>
     /// <param name="connector">The database connector.</param>
@@ -178,9 +192,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         if (this.Result != null && this.Result.Rows.Count > 0 && this.Result.Columns.Count > 0) {
             this.ScalarValue = this.Result.Rows[0][0];
         }
-        this.LastQuery = this.DBQuery.DeepCopy();
+        this.LastQuery = this.DBQuery.DeepClone();
         this.DBQuery   = Activator.CreateInstance<DBQueryType>();
 
+        int rows = this.Result?.Rows?.Count ?? 0;
         if (this.AfterQueryExecutionAction != null) {
             this.AfterQueryExecutionAction.Invoke(this.LastQuery);
         }
@@ -519,11 +534,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         long lastId   = offset;
         bool endFound = false;
 
-        DBQueryType originalQuery = this.DBQuery.DeepCopy();
+        DBQueryType originalQuery = this.DBQuery.DeepClone();
 
         while (!endFound) {
             this._ResetResult();
-            DBQueryType cachedQuery = originalQuery.DeepCopy();
+            DBQueryType cachedQuery = originalQuery.DeepClone();
 
             cachedQuery.Where(new Where<DBQueryType> {
                 Field       = byKeyField,
@@ -608,11 +623,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         bool endFound = false;
 
-        DBQueryType originalQuery = this.DBQuery.DeepCopy();
+        DBQueryType originalQuery = this.DBQuery.DeepClone();
 
         while (!endFound) {
             this._ResetResult();
-            DBQueryType cachedQuery = originalQuery.DeepCopy();
+            DBQueryType cachedQuery = originalQuery.DeepClone();
 
             cachedQuery.Limit(batchSize, offset);
             this.DBQuery = cachedQuery;
@@ -1947,6 +1962,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.DBQuery.Reset();
         this._ResetResult();
 
+        if (!Transactions.Contains(transactionName)) {
+            Transactions.Add(transactionName);
+        }
+
         return result;
     }
 
@@ -1966,6 +1985,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         this.DBQuery.Reset();
         this._ResetResult();
+
+        if (Transactions.Contains(transactionName)) {
+            Transactions.Remove(transactionName);
+        }
 
         return result;
     }
@@ -1987,6 +2010,10 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         this.DBQuery.Reset();
         this._ResetResult();
+
+        if (Transactions.Contains(transactionName)) {
+            Transactions.Remove(transactionName);
+        }
 
         return result;
     }
