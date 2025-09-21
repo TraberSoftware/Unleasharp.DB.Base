@@ -1,9 +1,8 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Data.Common;
 using System.Threading;
-using Unleasharp.DB.Base.QueryBuilding;
 
 namespace Unleasharp.DB.Base;
 
@@ -21,6 +20,11 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     where DBQueryBuilderType      : QueryBuilder<DBQueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType>
     where DBQueryType             : Query<DBQueryType>
 {
+    /// <summary>
+    /// Provides logging functionality.
+    /// </summary>
+    private readonly ILogger _logger = Logging.CreateLogger<DBConnectorManagerType>();
+
     private object                               _connectorStackLock    = new object();
     private Dictionary<long, DBConnectorType>    _connectorStack        = new Dictionary<long, DBConnectorType>();
     private object                               _queryBuilderStackLock = new object();
@@ -155,6 +159,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
 
         action.Invoke(this.ConnectionStringBuilder);
 
+        _logger.LogDebug("ConnectionStringBuilder configured (type: {SettingsType})", typeof(DBConnectorSettingsType).Name);
+
         return (DBConnectorManagerType) this;
     }
 
@@ -167,6 +173,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     public DBConnectorManagerType WithAutomaticConnectionRenewal(bool enabled = true) {
         this.AutomaticConnectionRenewal = enabled;
 
+        _logger.LogDebug("AutomaticConnectionRenewal set to {Enabled}", enabled);
+
         return (DBConnectorManagerType) this;
     }
 
@@ -178,6 +186,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     public DBConnectorManagerType WithAutomaticConnectionRenewalInterval(TimeSpan interval) {
         this.AutomaticConnectionRenewalInterval = interval;
 
+        _logger.LogDebug("AutomaticConnectionRenewalInterval set to {IntervalMs}ms", interval.TotalMilliseconds);
+
         return (DBConnectorManagerType) this;
     }
 
@@ -188,6 +198,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     /// <returns>The current connector manager instance.</returns>
     public DBConnectorManagerType WithConnectionSetup(Action<DBConnectionType> action) {
         this.ConnectionSetupAction = action;
+
+        _logger.LogDebug("ConnectionSetupAction configured");
 
         return (DBConnectorManagerType) this;
     }
@@ -204,9 +216,14 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
         DBQueryBuilderType queryBuilder = null;
         long threadId = Thread.CurrentThread.ManagedThreadId;
 
+        _logger.LogDebug("QueryBuilder requested for thread {ThreadId}", threadId);
+
         lock (_queryBuilderStackLock) {
             if (this._queryBuilderStack.ContainsKey(threadId)) {
                 queryBuilder = this._queryBuilderStack[threadId];
+
+                _logger.LogDebug("Found existing QueryBuilder for thread {ThreadId}", threadId);
+
                 // Don't renew the connection if the Query Builder holds a transaction
                 if (!queryBuilder.InTransaction) {
                     this.__InitializeConnector(queryBuilder.Connector);
@@ -231,6 +248,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     /// </summary>
     /// <returns>A new QueryBuilder instance bound to a detached connection.</returns>
     public virtual DBQueryBuilderType DetachedQueryBuilder() {
+        _logger.LogDebug("Creating detached QueryBuilder");
+
         return ((DBQueryBuilderType) Activator.CreateInstance(typeof(DBQueryBuilderType), new object[] { this.GetDetachedConnector() }))
             .WithOnQueryExceptionAction(this.OnQueryExceptionAction)
             .WithBeforeQueryExecutionAction(this.BeforeQueryExecutionAction)
@@ -244,6 +263,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     /// <param name="query">The query object to initialize with.</param>
     /// <returns>A new QueryBuilder instance bound to a detached connection and initialized with the query.</returns>
     public virtual DBQueryBuilderType DetachedQueryBuilder(DBQueryType query) {
+        _logger.LogDebug("Creating detached QueryBuilder with pre-defined query");
+
         return ((DBQueryBuilderType)Activator.CreateInstance(typeof(DBQueryBuilderType), new object[] { this.GetDetachedConnector(), query }))
             .WithOnQueryExceptionAction(this.OnQueryExceptionAction)
             .WithBeforeQueryExecutionAction(this.BeforeQueryExecutionAction)
@@ -257,6 +278,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     /// </summary>
     /// <returns>A new QueryBuilder instance bound to the current connection.</returns>
     protected virtual DBQueryBuilderType __GenerateDBQueryBuilderInstance() {
+        _logger.LogDebug("Generating DBQueryBuilder instance bound to thread connector");
+
         return ((DBQueryBuilderType) Activator.CreateInstance(typeof(DBQueryBuilderType), new object[] { this.GetThreadConnector() }))
             .WithOnQueryExceptionAction(this.OnQueryExceptionAction)
             .WithBeforeQueryExecutionAction(this.BeforeQueryExecutionAction)
@@ -276,13 +299,19 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
         DBConnectorType dbConnector = null;
         long            threadId    = Thread.CurrentThread.ManagedThreadId;
 
+        _logger.LogDebug("GetThreadConnector requested for thread {ThreadId}", threadId);
+
         lock (_connectorStackLock) {
             if (this._connectorStack.ContainsKey(threadId)) {
                 dbConnector = this._connectorStack[threadId];
+
+                _logger.LogDebug("Found existing connector for thread {ThreadId}", threadId);
             }
 
             // Instance exists, but is disconnected
             if (dbConnector != null && !dbConnector.Connected) {
+                _logger.LogInformation("Connector for thread {ThreadId} found but not connected. Recreating.", threadId);
+
                 dbConnector = null;
                 this._connectorStack.Remove(threadId);
             }
@@ -306,6 +335,8 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
     /// </summary>
     /// <returns>A brand-new DBType instance, initialized and ready to run queries.</returns>
     public DBConnectorType GetDetachedConnector() {
+        _logger.LogDebug("Creating detached connector");
+
         DBConnectorType dBconnector = this.__GenerateDBTypeInstance();
         this.__InitializeConnector(dBconnector);
 
@@ -324,7 +355,11 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
             : false
         ;
 
+        _logger.LogDebug("Initializing connector (force={Force}). LastConnectionTimestamp={Timestamp}", force, dbConnector.ConnectionTimestamp);
+
         dbConnector.Connect(force);
+
+        _logger.LogDebug("Connector initialization finished. Connected={Connected}", dbConnector.Connected);
     }
 
     /// <summary>
@@ -343,8 +378,12 @@ public class ConnectorManager<DBConnectorManagerType, DBConnectorType, DBConnect
         object settingsSource = !string.IsNullOrWhiteSpace(this.ConnectionString) ? this.ConnectionString : this.ConnectionStringBuilder;
 
         if (settingsSource != null) {
+            _logger.LogDebug("Generating DBConnector instance of type {ConnectorType} using settings source: {SourceType}", typeof(DBConnectorType).Name, settingsSource.GetType().Name);
+
             return (DBConnectorType) Activator.CreateInstance(typeof(DBConnectorType), new object[] { settingsSource });
         }
+
+        _logger.LogWarning("No connection settings available: both ConnectionString and ConnectionStringBuilder are null/empty. Returning null connector instance.");
 
         return null;
     }

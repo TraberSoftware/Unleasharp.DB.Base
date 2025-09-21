@@ -1,4 +1,4 @@
-﻿using Baksteen.Extensions.DeepCopy;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -33,6 +33,11 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     where DBQueryType             : Query<DBQueryType>
     where QueryBuilderType        : QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConnectionType, DBConnectorSettingsType>
 {
+    /// <summary>
+    /// Provides logging functionality.
+    /// </summary>
+    private readonly ILogger _logger = Logging.CreateLogger<QueryBuilderType>();
+
     /// <summary>
     /// Gets the database connector associated with this query builder.
     /// </summary>
@@ -119,6 +124,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.Connector = connector;
 
         this.DBQuery = Activator.CreateInstance<DBQueryType>();
+
+        _logger.LogDebug("QueryBuilder instantiated for connector {ConnectorType}", connector?.GetType().FullName);
     }
 
     /// <summary>
@@ -130,6 +137,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.Connector = connector;
 
             this.DBQuery = query;
+
+        _logger.LogDebug("QueryBuilder instantiated for connector {ConnectorType} with provided query of type {QueryType}", connector?.GetType().FullName, query?.GetType().FullName);
     }
 
     /// <summary>
@@ -170,6 +179,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     /// <param name="ex">The exception that occurred.</param>
     protected void _OnQueryException(Exception ex) {
+        _logger.LogError(ex, "Query exception while executing query: {Query}", this.DBQuery?.Render());
+
         if (this.OnQueryExceptionAction != null) {
             this.OnQueryExceptionAction.Invoke(this.DBQuery, ex);
         }
@@ -180,6 +191,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// </summary>
     protected void _BeforeQueryExecution() {
         this._ResetResult();
+
+        _logger.LogDebug("Preparing to execute query. Type: {QueryType}, Query: {QueryString}", this.DBQuery?.QueryType, this.DBQuery?.Render());
+
         if (this.BeforeQueryExecutionAction != null) {
             this.BeforeQueryExecutionAction.Invoke(this.DBQuery);
         }
@@ -196,6 +210,9 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.DBQuery   = Activator.CreateInstance<DBQueryType>();
 
         int rows = this.Result?.Rows?.Count ?? 0;
+        _logger.LogDebug("Query executed. Type: {QueryType}, AffectedRows: {AffectedRows}, ScalarValue: {Scalar}, LastInsertedId: {LastInsertedId}",
+            this.LastQuery?.QueryType, this.AffectedRows, this.ScalarValue, this.LastInsertedId);
+
         if (this.AfterQueryExecutionAction != null) {
             this.AfterQueryExecutionAction.Invoke(this.LastQuery);
         }
@@ -208,6 +225,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <returns>The current query builder instance.</returns>
     public QueryBuilderType Build(Action<DBQueryType> action) {
         action.Invoke(this.DBQuery);
+
+        _logger.LogDebug("Query built/modified. Type: {QueryType}", this.DBQuery?.QueryType);
 
         return (QueryBuilderType) this;
     }
@@ -354,6 +373,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
     /// <param name="row">The row object to be updated. The object must represent a valid database row and include a primary or unique key value.</param>
     /// <returns><see langword="true"/> if the row was successfully updated; otherwise, <see langword="false"/>.</returns>
     public bool Update(object row) {
+        _logger.LogDebug("Update called for row hash {Hash}", row?.GetHashCode());
         ResultCacheRow cached = ResultCache.Get(row.GetHashCode());
 
         if (cached != null) {
@@ -363,17 +383,21 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             if (rowChanges.Count > 0) {
                 if (string.IsNullOrEmpty(cached.KeyColumnName)) {
                     // Can't update a row for a table without a Primary Key
+                    _logger.LogWarning("Update aborted: table {Table} has no primary key defined.", cached.Table?.Name);
                     return false;
                 }
                 if (!cached.Data.ContainsKey(cached.KeyColumnName) || cached.KeyColumnName == null) {
                     // Can't update a row if we don't have the Primary Key value or it is null
+                    _logger.LogWarning("Update aborted: primary or unique key value for column {KeyColumn} not present in cached data.", cached.KeyColumnName);
                     return false;
                 }
                 if (string.IsNullOrWhiteSpace(cached.Data[cached.KeyColumnName].ToString())) {
                     // Can't update a row if Primary Key value is empty or null
+                    _logger.LogWarning("Update aborted: primary or unique key value for column {KeyColumn} is empty or null.", cached.KeyColumnName);
                     return false;
                 }
 
+                _logger.LogDebug("Detected {ChangeCount} changed fields for update on table {Table}. Proceeding to build update query.", rowChanges.Count, cached.Table?.Name);
                 this._ResetResult();
                 this.DBQuery = Activator.CreateInstance<DBQueryType>();
 
@@ -385,6 +409,12 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
                 ;
                 return this.Execute<bool>();
             }
+            else {
+                _logger.LogDebug("No changes detected for row hash {Hash}. Update skipped.", row.GetHashCode());
+            }
+        }
+        else {
+            _logger.LogDebug("No cached row found for hash {Hash}. Update skipped.", row.GetHashCode());
         }
 
         return false;
@@ -437,6 +467,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
 
         // Set the query type back
         this.DBQuery.SetQueryType(currentQueryType);
+
+        _logger.LogDebug("Count executed. TotalCount: {TotalCount}", this.TotalCount);
 
         return this.TotalCount;
     }
@@ -1962,6 +1994,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.DBQuery.Reset();
         this._ResetResult();
 
+        _logger.LogDebug("Started transaction {transactionName}", transactionName);
         if (!Transactions.Contains(transactionName)) {
             Transactions.Add(transactionName);
         }
@@ -1986,6 +2019,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.DBQuery.Reset();
         this._ResetResult();
 
+        _logger.LogDebug("Commited transaction {transactionName}", transactionName);
         if (Transactions.Contains(transactionName)) {
             Transactions.Remove(transactionName);
         }
@@ -2011,6 +2045,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this.DBQuery.Reset();
         this._ResetResult();
 
+        _logger.LogDebug("Rolled back transaction {transactionName}", transactionName);
         if (Transactions.Contains(transactionName)) {
             Transactions.Remove(transactionName);
         }

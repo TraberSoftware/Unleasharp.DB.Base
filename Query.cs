@@ -1,16 +1,13 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
 using Unleasharp.DB.Base.ExtensionMethods;
 using Unleasharp.DB.Base.QueryBuilding;
 using Unleasharp.DB.Base.SchemaDefinition;
-using Unleasharp.ExtensionMethods;
 
 namespace Unleasharp.DB.Base;
 
@@ -30,6 +27,11 @@ namespace Unleasharp.DB.Base;
 public class Query<DBQueryType> : Renderable
     where DBQueryType : Query<DBQueryType> 
 {
+    /// <summary>
+    /// Provides logging functionality.
+    /// </summary>
+    private readonly ILogger _logger = Logging.CreateLogger<DBQueryType>();
+
     /// <summary>
     /// Gets the database engine associated with this query.
     /// </summary>
@@ -195,6 +197,7 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     public Query() {
         this.ParentQuery = this;
+        _logger.LogDebug("Query instance created (default constructor).");
     }
 
     /// <summary>
@@ -203,6 +206,7 @@ public class Query<DBQueryType> : Renderable
     /// <param name="parentQuery">The parent query.</param>
     public Query(Query<DBQueryType> parentQuery) {
         this.ParentQuery = parentQuery;
+        _logger.LogDebug("Query instance created with parent query.");
     }
 
     /// <summary>
@@ -212,6 +216,7 @@ public class Query<DBQueryType> : Renderable
     /// <returns>The current query instance.</returns>
     public Query<DBQueryType> WithParentQuery(Query<DBQueryType> parentQuery) {
         this.ParentQuery = parentQuery;
+        _logger.LogDebug("Parent query set.");
         return (DBQueryType) this;
     }
 
@@ -229,6 +234,8 @@ public class Query<DBQueryType> : Renderable
             Value       = queryValue,
             EscapeValue = escape
         });
+
+        _logger.LogDebug("Prepared query value added: {Label} Escape={Escape}", label, escape);
 
         return label;
     }
@@ -248,6 +255,8 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Reset() {
+        _logger.LogDebug("Resetting query to initial state.");
+
         this.QueryDistinct   = false;
         this.QueryFrom       = new List<From  <DBQueryType>>();
         this.QuerySelect     = new List<Select<DBQueryType>>();
@@ -276,6 +285,8 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType ResetPreparedData() {
+        _logger.LogDebug("Resetting prepared data and rendered strings.");
+
         this.QueryRenderedString = null;
         this.QueryPreparedString = null;
         this.QueryRenderedData   = new Dictionary<string, string>();
@@ -296,6 +307,7 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     public void Touch() {
         this.HasChanged = true;
+        _logger.LogDebug("Query marked as changed.");
     }
 
     /// <summary>
@@ -303,6 +315,7 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     public void Untouch() {
         this.HasChanged = false;
+        _logger.LogDebug("Query marked as unchanged.");
     }
     #endregion
 
@@ -312,9 +325,12 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     /// <returns>The rendered query string.</returns>
     public virtual string RenderPrepared() {
+        _logger.LogDebug("RenderPrepared called. QueryType={QueryType} HasChanged={HasChanged}", this.QueryType, this.HasChanged);
+
         this._RenderPrepared();
         this.HasChanged = false;
 
+        _logger.LogDebug("RenderPrepared result length={Length}", this.QueryRenderedString?.Length ?? 0);
         return this.QueryRenderedString;
     }
 
@@ -330,9 +346,12 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     /// <returns>The rendered query string.</returns>
     public virtual string Render() {
+        _logger.LogDebug("Render called. QueryType={QueryType} HasChanged={HasChanged}", this.QueryType, this.HasChanged);
+
         this._Render();
         this.HasChanged = false;
 
+        _logger.LogDebug("Render result length={Length}", this.QueryPreparedString?.Length ?? 0);
         return this.QueryPreparedString;
     }
 
@@ -345,6 +364,8 @@ public class Query<DBQueryType> : Renderable
         }
 
         if (string.IsNullOrWhiteSpace(this.QueryPreparedString) || this.HasChanged) {
+            _logger.LogDebug("Performing internal render. QueryType={QueryType}", this.QueryType);
+
             switch (this.QueryType) {
                 case QueryType.COUNT:
                     this._RenderCountQuery();
@@ -484,6 +505,8 @@ public class Query<DBQueryType> : Renderable
     /// <param name="queryType">The query type.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType SetQueryType(QueryType queryType) {
+        _logger.LogDebug("Setting QueryType from {Old} to {New}", this.QueryType, queryType);
+
         this.QueryType = queryType;
 
         return (DBQueryType) this;
@@ -551,6 +574,7 @@ public class Query<DBQueryType> : Renderable
     /// <param name="distinct">True to use DISTINCT; otherwise, false.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Distinct(bool distinct = true) {
+        _logger.LogDebug("Distinct set to {Distinct}", distinct);
         this.QueryDistinct = distinct;
 
         return (DBQueryType) this;
@@ -568,6 +592,7 @@ public class Query<DBQueryType> : Renderable
         this.Select();
 
         this.Touch();
+        _logger.LogDebug("Added SELECT clause. Total SELECTs={Count}", this.QuerySelect.Count);
         return (DBQueryType) this;
     }
 
@@ -688,6 +713,8 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Union(Union<DBQueryType> union) {
         this.QueryType = QueryType.SELECT_UNION;
         this.QueryUnion.Add(union);
+
+        _logger.LogDebug("Added UNION clause. Total UNIONS={Count}", this.QueryUnion.Count);
 
         return (DBQueryType)this;
     }
@@ -833,6 +860,7 @@ public class Query<DBQueryType> : Renderable
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType UnionAlias(string alias) {
         this.QueryUnionAlias = alias;
+        _logger.LogDebug("Set UNION alias: {Alias}", alias);
 
         return (DBQueryType) this;
     }
@@ -848,6 +876,7 @@ public class Query<DBQueryType> : Renderable
         this.QuerySet.Add(setValue);
 
         this.Touch();
+        _logger.LogDebug("Added SET clause. Total SETs={Count}", this.QuerySet.Count);
         return (DBQueryType) this;
     }
 
@@ -936,6 +965,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryValues.Add(row);
 
         this.Touch();
+        _logger.LogDebug("Added VALUES row. Total VALUES rows={Count} Total COLUMNS={Columns}", this.QueryValues.Count, this.QueryColumns.Count);
         return (DBQueryType) this;
     }
 
@@ -1018,6 +1048,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryOnConflictKeyColumn = keyColumnName;
 
         this.Touch();
+        _logger.LogDebug("OnConflict set to {Conflict} KeyColumn={KeyColumn}", onConflict, keyColumnName);
         return (DBQueryType)this;
     }
 
@@ -1050,6 +1081,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryFrom.Add(fromSentence);
 
         this.Touch();
+        _logger.LogDebug("Added FROM clause. Total FROMs={Count}", this.QueryFrom.Count);
         return (DBQueryType) this;
     }
     /// <summary>
@@ -1154,6 +1186,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryJoin.Add(sentence);
 
         this.Touch();
+        _logger.LogDebug("Added JOIN clause. Total JOINs={Count}", this.QueryJoin.Count);
         return (DBQueryType) this;
     }
 
@@ -1287,6 +1320,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryWhere.Add(whereSentence);
 
         this.Touch();
+        _logger.LogDebug("Added WHERE clause. Total WHEREs={Count}", this.QueryWhere.Count);
         return (DBQueryType) this;
     }
 
@@ -1392,7 +1426,6 @@ public class Query<DBQueryType> : Renderable
     /// <typeparam name="TRight">The table type for the right side of the comparison.</typeparam>
     /// <param name="expressionLeft">The property expression for the left side of the comparison.</param>
     /// <param name="expressionRight">The property expression for the right side of the comparison.</param>
-    /// <param name="where">The filtering condition to apply, including the field and comparison logic.</param>
     /// <returns>The current query instance.</returns>
     public virtual DBQueryType Where<TLeft, TRight>(Expression<Func<TLeft, object>> expressionLeft, Expression<Func<TRight, object>> expressionRight)
         where TLeft  : class
@@ -1435,6 +1468,7 @@ public class Query<DBQueryType> : Renderable
             Comparer   = comparer
         });
     }
+    #endregion
 
     #region Query Building - Where Greater
     /// <summary>
@@ -2311,6 +2345,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryWhereIn.Add(whereInSentence);
 
         this.Touch();
+        _logger.LogDebug("Added WHERE IN clause. Total WHERE INs={Count}", this.QueryWhereIn.Count);
         return (DBQueryType) this;
     }
 
@@ -2387,6 +2422,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryWhereIn.Add(whereInSentence);
 
         this.Touch();
+        _logger.LogDebug("Added WHERE NOT IN clause. Total WHERE INs={Count}", this.QueryWhereIn.Count);
         return (DBQueryType)this;
     }
 
@@ -2548,6 +2584,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryGroup.Add(group);
 
         this.Touch();
+        _logger.LogDebug("Added GROUP BY clause. Total GROUP BYs={Count}", this.QueryGroup.Count);
         return (DBQueryType) this;
     }
 
@@ -2605,6 +2642,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryOrder.Add(orderSentence);
 
         this.Touch();
+        _logger.LogDebug("Added ORDER BY clause. Total ORDERs={Count}", this.QueryOrder.Count);
         return (DBQueryType) this;
     }
 
@@ -2671,6 +2709,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryLimit = limitSentence;
 
         this.Touch();
+        _logger.LogDebug("Set LIMIT. Count={Count} Offset={Offset}", limitSentence?.Count, limitSentence?.Offset);
         return (DBQueryType) this;
     }
 
@@ -2700,6 +2739,7 @@ public class Query<DBQueryType> : Renderable
         this.QueryCreate = tableType;
 
         this.Touch();
+        _logger.LogDebug("CreateTable called for type {TableType}", tableType?.FullName);
         return (DBQueryType)this;
     }
 
@@ -2776,7 +2816,6 @@ public class Query<DBQueryType> : Renderable
             dataItem => new PreparedValue { Value = dataItem.Value, EscapeValue = true }
         ));
     }
-    #endregion
     #endregion
     #endregion
 
