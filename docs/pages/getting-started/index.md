@@ -148,6 +148,39 @@ ConnectorManager dbConnector = new ConnectorManager("Data Source=unleasharp.db;V
 ;
 ```
 
+## Logging
+
+Unleasharp.DB provides debug logging to trace the Query, QueryBuilder and ConnectorManager behaviour to detect possible bugs or query rendering errors.
+
+The default log level is `ERROR` to avoid excessive logging, but the logger can be configured to match the program needs.
+
+### Set Minimum Logging Level
+```csharp
+using Unleasharp.DB.Base;
+
+Logging.SetMinimumLogLevel(Microsoft.Extensions.Logging.LogLevel.Debug);
+```
+
+### Setup Default ILoggerFactory
+```csharp
+Logging.SetLoggingOptions(options => {
+    options.SingleLine      = true;
+    options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss.fff] "; // Custom format
+    options.UseUtcTimestamp = false;
+    options.IncludeScopes   = true;
+});
+```
+
+### Setup Custom ILoggerFactory
+```csharp
+Logging.SetLoggerFactory(
+    LoggerFactory.Create(loggingBuilder => loggingBuilder
+        .SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace)
+        .AddConsole()
+    )
+);
+```
+
 ## Engine-Specific
 
 ### PostgreSQL
