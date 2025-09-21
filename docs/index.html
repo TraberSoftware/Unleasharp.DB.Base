@@ -151,6 +151,59 @@
                 background-color: var(--primary);
                 color: white;
             }
+
+        /* Mobile menu toggle & mobile nav */
+        .menu-toggle {
+            display: none;
+            background: transparent;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--dark);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+            .menu-toggle:focus {
+                outline: 2px solid var(--primary);
+                outline-offset: 2px;
+            }
+
+        .mobile-nav {
+            display: none;
+            position: absolute;
+            top: calc(100% + 0px);
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            z-index: 200;
+            padding: 12px 20px;
+            flex-direction: column;
+            gap: 8px;
+            border-bottom-left-radius: var(--border-radius);
+            border-bottom-right-radius: var(--border-radius);
+        }
+
+            .mobile-nav.open {
+                display: flex;
+            }
+
+            .mobile-nav a {
+                display: block;
+                padding: 12px 8px;
+                color: var(--dark);
+                text-decoration: none;
+                font-weight: 600;
+                border-radius: 6px;
+            }
+
+                .mobile-nav a:hover {
+                    background: var(--light-gray);
+                    color: var(--primary);
+                }
+
         /* Hero Section */
         .hero {
             padding: 80px 0;
@@ -218,7 +271,6 @@
             border-radius: var(--border-radius);
             padding: 25px;
             box-shadow: var(--box-shadow);
-            max-width: 500px;
             position: relative;
             text-align: left;
         }
@@ -230,13 +282,13 @@
             margin-bottom: 15px;
         }
 
-        .code-header span {
-            background-color: var(--dark);
-            color: white;
-            padding: 3px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
+            .code-header span {
+                background-color: var(--dark);
+                color: white;
+                padding: 3px 10px;
+                border-radius: 4px;
+                font-size: 0.8rem;
+            }
 
         .code-content {
             font-family: 'Courier New', monospace;
@@ -244,25 +296,25 @@
             color: #dcdcdc;
         }
 
-        .code-content .comment {
-            color: #6a9955;
-        }
+            .code-content .comment {
+                color: #6a9955;
+            }
 
-        .code-content .keyword {
-            color: #569cd6;
-        }
+            .code-content .keyword {
+                color: #569cd6;
+            }
 
-        .code-content .string {
-            color: #ce9178;
-        }
+            .code-content .string {
+                color: #ce9178;
+            }
 
-        .code-content .function {
-            color: #dcdcaa;
-        }
+            .code-content .function {
+                color: #dcdcaa;
+            }
 
-        .code-content .type {
-            color: #4ec9b0;
-        }
+            .code-content .type {
+                color: #4ec9b0;
+            }
 
         /* Features Section */
         .features {
@@ -497,6 +549,33 @@
                 align-items: center;
                 gap: 10px;
             }
+
+            /* Center the new example card across the grid and center its block */
+            .example-card.centered-card {
+                grid-column: 1 / -1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+                .example-card.centered-card .code-block {
+                    display: inline-block; /* make the block itself centerable by parent */
+                    text-align: left; /* inner text remains left-aligned */
+                    max-width: 760px; /* keep block readable and similar size to others */
+                    width: 100%;
+                }
+
+        .badge-new {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+            vertical-align: middle;
+            font-weight: 700;
+        }
         /* CTA Section */
         .cta {
             padding: 80px 0;
@@ -657,6 +736,19 @@
             .examples-content {
                 grid-template-columns: 1fr;
             }
+
+            /* show menu toggle on mobile */
+            .menu-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 12px;
+            }
+
+            /* ensure mobile nav sits under header */
+            .mobile-nav {
+                top: calc(100% + 0px);
+            }
         }
     </style>
 </head>
@@ -665,10 +757,14 @@
     <header>
         <div class="container">
             <nav class="navbar">
+                <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <a href="#" class="logo">
                     <i class="fas fa-database"></i>
                     <span>Unleasharp.DB</span>
                 </a>
+
                 <div class="nav-links">
                     <a href="#features">Features</a>
                     <a href="#installation">Installation</a>
@@ -676,7 +772,11 @@
                     <a href="#examples">Examples</a>
                     <a href="/Unleasharp.DB.Base/docs/" target="_blank">Documentation</a>
                 </div>
+
                 <a href="#installation" class="btn btn-primary">Get Started</a>
+
+                <!-- Collapsible mobile nav (populated from .nav-links) -->
+                <div class="mobile-nav" id="mobileNav" aria-hidden="true"></div>
             </nav>
         </div>
     </header>
@@ -847,9 +947,6 @@
                 <div class="example-card">
                     <h3><i class="fas fa-search"></i> Query Building</h3>
                     <div class="code-block">
-                        <div class="code-header">
-                            <span>Query Builder</span>
-                        </div>
                         <div class="code-content">
                             <span class="keyword">var</span> users = db.<span class="function">QueryBuilder</span>().<span class="function">Build</span>(query => query<br>
                             &nbsp;&nbsp;.<span class="function">From</span>&lt;<span class="type">User</span>&gt;()<br>
@@ -863,9 +960,6 @@
                 <div class="example-card">
                     <h3><i class="fas fa-save"></i> Data Insertion</h3>
                     <div class="code-block">
-                        <div class="code-header">
-                            <span>Insert Data</span>
-                        </div>
                         <div class="code-content">
                             <span class="keyword">var</span> user = <span class="keyword">new</span> <span class="type">User</span> {<br>
                             &nbsp;&nbsp;Name = <span class="string">"John Doe"</span>,<br>
@@ -879,6 +973,22 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Automatic Updates: new centered block with badge "New" -->
+                <div class="example-card centered-card">
+                    <h3><i class="fas fa-sync-alt"></i> Automatic Updates <span class="badge-new">New</span></h3>
+                    <div class="code-block">
+                        <div class="code-content">
+                            <span class="keyword">var</span> user = db.<span class="function">QueryBuilder</span>().<span class="function">Build</span>(query =&gt; query<br>
+                            &nbsp;&nbsp;.<span class="function">From</span>&lt;<span class="type">User</span>&gt;()<br>
+                            &nbsp;&nbsp;.<span class="function">Where</span>&lt;<span class="type">User</span>&gt;(user =&gt; user.Id, 17)<br>
+                            ).<span class="function">FirstOrDefault</span>&lt;<span class="type">User</span>&gt;();<br><br>
+                            user.Address = <span class="string">"My new address"</span>;<br>
+                            db.<span class="function">QueryBuilder</span>().<span class="function">Update</span>(user);<br>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
@@ -1015,11 +1125,11 @@
         loadPackages().then(() => {
             packages.forEach((package, index) => {
                 const packageCard = `<div class="database-card">
-                    <i class="%icon%"></i>
-                    <h3>%name%</h3>
-                    <p>%name% database support</p>
-                    <div class="version">v%version%</div>
-                </div>`.replaceAll('%name%', package.name).replaceAll('%version%', package.version).replaceAll('%icon%', package.icon);
+                            <i class="%icon%"></i>
+                            <h3>%name%</h3>
+                            <p>%name% database support</p>
+                            <div class="version">v%version%</div>
+                        </div>`.replaceAll('%name%', package.name).replaceAll('%version%', package.version).replaceAll('%icon%', package.icon);
                 const packagesCardsContainer = document.querySelector('div.database-grid');
                 packagesCardsContainer.innerHTML = packagesCardsContainer.innerHTML + packageCard;
 
@@ -1050,58 +1160,58 @@
 
             document.querySelectorAll('.database-option')[0].click();
         });
-        
+
         function updateInstallationContent(db) {
             const contentElement = document.getElementById('installation-content');
-            let packageName           = "Unleasharp.DB." + db;
+            let packageName = "Unleasharp.DB." + db;
             let packageManagerCommand = "Install-Package Unleasharp.DB." + db;
-            let cliCommand            = "dotnet add package Unleasharp.DB." + db;
-            let packageVersion        = packages.filter(package => package.name == db)[0].version;
+            let cliCommand = "dotnet add package Unleasharp.DB." + db;
+            let packageVersion = packages.filter(package => package.name == db)[0].version;
 
             getLatestNugetVersion(packageName)
                 .then(v => version = v)
-            ;
-            
+                ;
+
             // Update the installation steps with syntax highlighting
             contentElement.innerHTML = `
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>Install via Package Manager</h4>
-                        <p>Open your Package Manager Console and run:</p>1
-                        <code class="command">${packageManagerCommand}</code>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>Install via .NET CLI</h4>
-                        <p>Run the following command in your project directory:</p>
-                        <code class="command">${cliCommand}</code>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>Package Reference (Manual)</h4>
-                        <p>Add to your .csproj file:</p>
-                        <code class="command">&lt;PackageReference Include="${packageName}" Version="${packageVersion}" /&gt;</code>
-                    </div>
-                </div>
-            `;
-            
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Install via Package Manager</h4>
+                                <p>Open your Package Manager Console and run:</p>1
+                                <code class="command">${packageManagerCommand}</code>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Install via .NET CLI</h4>
+                                <p>Run the following command in your project directory:</p>
+                                <code class="command">${cliCommand}</code>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Package Reference (Manual)</h4>
+                                <p>Add to your .csproj file:</p>
+                                <code class="command">&lt;PackageReference Include="${packageName}" Version="${packageVersion}" /&gt;</code>
+                            </div>
+                        </div>
+                    `;
+
             // Update the right code block with syntax highlighting
             const imageCodeElement = document.querySelector('.installation-image .code-content');
             imageCodeElement.innerHTML = `
-                <span class="comment">// Install via Package Manager Console</span><br>
-                <span class="keyword">PM&gt;</span> ${packageManagerCommand}<br><br>
-                <span class="comment">// Or via .NET CLI</span><br>
-                <span class="keyword">CLI&gt;</span> ${cliCommand}<br><br>
-                <span class="comment">// Or add to your .csproj</span><br>
-                <span class="keyword">&lt;PackageReference</span> <span class="function">Include</span>=<span class="string">"${packageName}"</span> <span class="function">Version</span>=<span class="string">"${packageVersion}"</span> <span class="keyword">/&gt;</span>
-            `;
+                        <span class="comment">// Install via Package Manager Console</span><br>
+                        <span class="keyword">PM&gt;</span> ${packageManagerCommand}<br><br>
+                        <span class="comment">// Or via .NET CLI</span><br>
+                        <span class="keyword">CLI&gt;</span> ${cliCommand}<br><br>
+                        <span class="comment">// Or add to your .csproj</span><br>
+                        <span class="keyword">&lt;PackageReference</span> <span class="function">Include</span>=<span class="string">"${packageName}"</span> <span class="function">Version</span>=<span class="string">"${packageVersion}"</span> <span class="keyword">/&gt;</span>
+                    `;
         }
-        
+
         // Simple smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -1111,7 +1221,7 @@
                 });
             });
         });
-        
+
         // Add scroll animation to feature cards
         const featureCards = document.querySelectorAll('.feature-card');
         const observer = new IntersectionObserver((entries) => {
@@ -1128,12 +1238,12 @@
             card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
             observer.observe(card);
         });
-        
+
         // Set current year in copyright
         document.getElementById('current-year').textContent = new Date().getFullYear();
-        
+
         // Add syntax highlighting for code elements
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const codeElements = document.querySelectorAll('code.command');
             codeElements.forEach(element => {
                 element.classList.add('code-content');
@@ -1142,6 +1252,55 @@
                 element.innerHTML = element.innerHTML.replace(/(".*?")/g, '<span class="string">$1</span>');
             });
         });
+
+        // Mobile menu logic
+        (function () {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const mobileNav = document.getElementById('mobileNav');
+            const navLinks = document.querySelector('.nav-links');
+
+            if (!menuToggle || !mobileNav || !navLinks) return;
+
+            // populate mobile nav from desktop nav links
+            mobileNav.innerHTML = navLinks.innerHTML;
+
+            function setToggleState(open) {
+                menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+                mobileNav.setAttribute('aria-hidden', open ? 'false' : 'true');
+                menuToggle.innerHTML = open ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+                if (open) {
+                    mobileNav.classList.add('open');
+                } else {
+                    mobileNav.classList.remove('open');
+                }
+            }
+
+            menuToggle.addEventListener('click', () => {
+                const isOpen = mobileNav.classList.contains('open');
+                setToggleState(!isOpen);
+            });
+
+            // close mobile nav when clicking any link inside it
+            mobileNav.querySelectorAll('a').forEach(a => {
+                a.addEventListener('click', () => {
+                    setToggleState(false);
+                });
+            });
+
+            // close on escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && mobileNav.classList.contains('open')) {
+                    setToggleState(false);
+                }
+            });
+
+            // ensure menu is closed when resizing to desktop
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    setToggleState(false);
+                }
+            });
+        })();
     </script>
 </body>
 </html>
