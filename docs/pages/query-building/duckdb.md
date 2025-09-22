@@ -275,3 +275,90 @@ List<Todos> jsonTodos = dbConnector.QueryBuilder().Build(query => query
     .Where<Todos>("userId", 1)
 ).ToList<Todos>();
 ```
+
+## Parquet
+
+DuckDB provides Parquet support (functions like read_parquet and COPY FROM). The Query Builder exposes helpers for common Parquet workflows while preserving the full parameter surface available in DuckDB.
+
+See the DuckDB docs for the complete set of Parquet parameters:
+https://duckdb.org/docs/stable/data/parquet/overview#parameters
+
+The examples below use the provided sample `test.parquet` file and a simple Unleasharp.DB mapping class.
+
+[https://www.kaggle.com/datasets/sahilsawantss/test-parquet](https://www.kaggle.com/datasets/sahilsawantss/test-parquet)
+
+::: code-group
+```csharp [TestParquet.cs]
+[Table("parquet_test")]
+public class TestParquet {
+    [Column("ID", ColumnDataType.UInt64, PrimaryKey = true)]
+    public long Id { get; set; }
+
+    [Column("Date", ColumnDataType.DateTime)]
+    public DateTime Date { get; set; }
+
+    [Column("X1", ColumnDataType.Double)]
+    public double X1 { get; set; }
+
+    [Column("X2", ColumnDataType.Double)]
+    public double X2 { get; set; }
+
+    [Column("X3", ColumnDataType.Double)]
+    public double X3 { get; set; }
+
+    [Column("X4", ColumnDataType.Double)]
+    public double X4 { get; set; }
+
+    [Column("X5", ColumnDataType.Double)]
+    public double X5 { get; set; }
+}
+```
+:::
+
+### Parquet to Table
+
+This workflow copies objects from a Parquet file into a database table (equivalent to `COPY table_name FROM 'parquet_file.parquet'`).
+
+> 📝 **Note**: With the current Query Builder you must create the destination table beforehand (for example with `CreateTable<T>()`).
+
+```csharp
+ReadParquetFunction readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
+    Path = "test.parquet",
+};
+
+dbConnector.QueryBuilder().Build(query => query.CreateTable<Todos>()).Execute<bool>();
+int InsertedFromParquet = dbConnector.QueryBuilder().Build(query => query
+    .CopyIntoFromParquet<TestParquet>(readParquetFunction)
+).Execute<int>();
+```
+
+If the table already exists you may also target a table by name (no class mapping required) and dump the Parquet contents directly into it:
+
+```csharp
+ReadParquetFunction readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
+    Path = "test.parquet",
+};
+
+int InsertedFromParquet = dbConnector.QueryBuilder().Build(query => query
+    .CopyIntoFromParquet("parquet_test", readParquetFunction)
+).Execute<int>();
+```
+
+
+### Parquet to Rows
+
+DuckDB allows direct interaction with Parquet data using regular queries, reading data from a Parquet file.
+
+This method insert the data from a Parquet file into a table. It is the equivalent to `SELECT * FROM read_parquet('parquet_file.parquet')`.
+
+```csharp
+ReadParquetFunction readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
+    Path = "test.parquet",
+};
+
+List<TestParquet> parquetEntries = dbConnector.QueryBuilder().Build(query => query
+    .Select()
+    .From(readParquetFunction)
+    .Limit(100)
+).ToList<TestParquet>();
+```
