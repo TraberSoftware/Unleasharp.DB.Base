@@ -390,25 +390,33 @@
             background-color: var(--light);
         }
 
-        .installation-content {
-            display: flex;
-            gap: 50px;
-            align-items: center;
+        .installation-header {
+            text-align: center;
         }
 
-        .installation-text {
-            flex: 1;
-        }
-
-            .installation-text h2 {
+            .installation-header h2 {
                 font-size: 2.5rem;
                 margin-bottom: 20px;
             }
 
-            .installation-text p {
+            .installation-header p {
                 margin-bottom: 30px;
                 color: var(--gray);
             }
+
+        .installation-content {
+            display: flex;
+            gap: 50px;
+            align-items: flex-start;
+        }
+
+        .installation-text {
+            flex: 1.25;
+        }
+
+        .installation-image {
+            flex: 0.75;
+        }
 
         .database-selector {
             background-color: white;
@@ -421,12 +429,15 @@
         .selector-title {
             margin-bottom: 15px;
             font-size: 1.2rem;
+            text-align: center;
         }
 
         .database-options {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
         }
 
         .database-option {
@@ -869,10 +880,12 @@
     <!-- Installation Section -->
     <section class="installation" id="installation">
         <div class="container">
+            <div class="installation-header">
+                <h2>Install Unleasharp.DB</h2>
+                <p>Select your preferred database provider to get started with Unleasharp.DB. All packages are available on NuGet.</p>
+            </div>
             <div class="installation-content">
                 <div class="installation-text">
-                    <h2>Install Unleasharp.DB</h2>
-                    <p>Select your preferred database provider to get started with Unleasharp.DB. All packages are available on NuGet.</p>
                     <div class="database-selector">
                         <div class="selector-title">Select Database Provider:</div>
                         <div class="database-options"></div>
@@ -1178,7 +1191,7 @@
                             <div class="step-number">1</div>
                             <div class="step-content">
                                 <h4>Install via Package Manager</h4>
-                                <p>Open your Package Manager Console and run:</p>1
+                                <p>Open your Package Manager Console and run:</p>
                                 <code class="command">${packageManagerCommand}</code>
                             </div>
                         </div>
