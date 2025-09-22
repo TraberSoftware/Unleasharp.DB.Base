@@ -150,9 +150,9 @@ ConnectorManager dbConnector = new ConnectorManager("Data Source=unleasharp.db;V
 
 ## Logging
 
-Unleasharp.DB provides debug logging to trace the Query, QueryBuilder and ConnectorManager behaviour to detect possible bugs or query rendering errors.
+Unleasharp.DB includes built-in debug logging that helps trace query rendering, query builder operations, and connector lifecycle events. The default minimum level is ERROR to reduce noise in production.
 
-The default log level is `ERROR` to avoid excessive logging, but the logger can be configured to match the program needs.
+Configure logging during startup to suit development or production needs.
 
 ### Set Minimum Logging Level
 ```csharp
@@ -172,6 +172,8 @@ Logging.SetLoggingOptions(options => {
 ```
 
 ### Setup Custom ILoggerFactory
+To integrate with your application's logging stack (Microsoft.Extensions.Logging), provide a custom ILoggerFactory:
+
 ```csharp
 Logging.SetLoggerFactory(
     LoggerFactory.Create(loggingBuilder => loggingBuilder
@@ -179,7 +181,10 @@ Logging.SetLoggerFactory(
         .AddConsole()
     )
 );
+
 ```
+
+> 📝 **Note**: Set trace or debug levels only in development or when diagnosing issues — verbose logging can impact performance and generate large logs.
 
 ## Engine-Specific
 
