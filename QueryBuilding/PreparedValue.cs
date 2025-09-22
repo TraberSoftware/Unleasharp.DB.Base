@@ -11,7 +11,7 @@ namespace Unleasharp.DB.Base.QueryBuilding;
 /// should be escaped.
 /// </summary>
 /// <remarks>This class is typically used to encapsulate a value and its associated  escaping behavior, allowing
-/// consumers to handle the value appropriately  based on the <see cref="EscapeValue"/> property.</remarks>
+/// consumers to handle the value appropriately based on the <see cref="EscapeValue"/> property.</remarks>
 public class PreparedValue {
     public dynamic Value;
     public bool    EscapeValue;

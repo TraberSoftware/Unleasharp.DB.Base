@@ -56,7 +56,7 @@ DuckDB provides first-class CSV support (functions like read_csv and COPY FROM).
 See the DuckDB docs for the complete set of CSV parameters:
 https://duckdb.org/docs/stable/data/csv/overview#parameters
 
-The examples below use the provided sample flights.csv and a simple Unleasharp.DB mapping class.
+The examples below use the provided sample `flights.csv` and a simple Unleasharp.DB mapping class.
 
 ::: code-group
 ```csv [flights.csv]
@@ -153,3 +153,125 @@ List<Flights> csvFlights = dbConnector.QueryBuilder().Build(query => query
     .Select()
     .From(readCSVFunction)
 ).ToList<Flights>();
+```
+
+## JSON
+
+DuckDB provides JSON support (functions like read_json and COPY FROM). The Query Builder exposes helpers for common JSON workflows while preserving the full parameter surface available in DuckDB.
+
+See the DuckDB docs for the complete set of JSON parameters:
+https://duckdb.org/docs/stable/data/json/loading_json#parameters
+
+The examples below use the provided sample `todos.json` and a simple Unleasharp.DB mapping class.
+
+::: code-group
+```json [todos.json]
+[
+  {
+    "userId": 1,
+    "id": 1,
+    "title": "delectus aut autem",
+    "completed": false
+  },
+  {
+    "userId": 1,
+    "id": 2,
+    "title": "quis ut nam facilis et officia qui",
+    "completed": false
+  },
+  {
+    "userId": 1,
+    "id": 3,
+    "title": "fugiat veniam minus",
+    "completed": false
+  },
+  ...
+]
+```
+
+```csharp [Todos.cs]
+[Table("todo")]
+public class Todos {
+    [Column("id", ColumnDataType.UInt64, Unsigned = true, PrimaryKey = true)]
+    public ulong id { get; set; }
+
+    [Column("userId", ColumnDataType.UInt64, Unsigned = true)]
+    public ulong userId { get; set; }
+
+    [Column("title", ColumnDataType.Varchar)]
+    public string title { get; set; }
+
+    [Column("completed", ColumnDataType.Boolean)]
+    public string completed { get; set; }
+}
+```
+:::
+
+### JSON to Table
+
+This workflow copies objects from a JSON file into a database table (equivalent to `COPY table_name FROM 'json_file.json'`). 
+
+> 📝 **Note**: With the current Query Builder you must create the destination table beforehand (for example with `CreateTable<T>()`).
+
+```csharp
+var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
+    Path    = "todos.json",
+    Format  = JSONFormat.Array,
+    Columns = new Dictionary<string, string> {
+        {"id",        "UBIGINT" },
+        {"userId",    "UBIGINT" },
+        {"title",     "VARCHAR" },
+        {"completed", "BOOLEAN" },
+    }
+};
+
+dbConnector.QueryBuilder().Build(query => query.CreateTable<Todos>()).Execute<bool>();
+int insertedFromJSON = dbConnector.QueryBuilder().Build(query => query
+    .CopyIntoFromJSON<Todos>(readJsonFunction)
+).Execute<int>();
+```
+
+If the table already exists you may also target a table by name (no class mapping required) and dump the JSON contents directly into it:
+
+```csharp
+var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
+    Path    = "todos.json",
+    Format  = JSONFormat.Array,
+    Columns = new Dictionary<string, string> {
+        {"id",        "UBIGINT" },
+        {"userId",    "UBIGINT" },
+        {"title",     "VARCHAR" },
+        {"completed", "BOOLEAN" },
+    }
+};
+
+int insertedFromJSON = dbConnector.QueryBuilder().Build(query => query
+    .CopyIntoFromJSON("todos", readJsonFunction)
+).Execute<int>();
+```
+
+
+### JSON to Rows
+
+DuckDB allows direct interaction with JSON data using regular queries, reading data from a JSON file.
+
+This method insert the data from a JSON file into a table. It is the equivalent to `SELECT * FROM read_json('json_file.json')`.
+
+```csharp
+var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
+    Path    = "todos.json",
+    Format  = JSONFormat.Array,
+    Columns = new Dictionary<string, string> {
+        {"id",        "UBIGINT" },
+        {"userId",    "UBIGINT" },
+        {"title",     "VARCHAR" },
+        {"completed", "BOOLEAN" },
+    }
+};
+
+List<Todos> jsonTodos = dbConnector.QueryBuilder().Build(query => query
+    .Select()
+    .From(readJsonFunction)
+    .Where<Todos>("userId", 1)
+).ToList<Todos>();
+```

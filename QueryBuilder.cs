@@ -264,7 +264,7 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
         this._AfterQueryExecution();
 
         object? result = null;
-        switch (this.LastQuery.QueryType) {
+        switch (this.LastQuery.QueryType == QueryType.RAW ? this.LastQuery.RawQueryType : this.LastQuery.QueryType) {
             case QueryType.COUNT:
                 result = true switch {
                     true when typeof(T) == typeof(bool)  => this.TotalCount > 0,

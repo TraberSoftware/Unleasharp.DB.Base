@@ -148,6 +148,11 @@ public class Query<DBQueryType> : Renderable
     public QueryType QueryType                             { get; protected set; } = QueryType.RAW;
 
     /// <summary>
+    /// Gets or sets the underlying type of the query (SELECT, INSERT, etc.) for a RAW query.
+    /// </summary>
+    public QueryType RawQueryType                          { get; protected set; } = QueryType.RAW;
+
+    /// <summary>
     /// Gets or set the conflict resolution strategy to be used when a conflict occurs during an INSERT.
     /// </summary>
     public OnInsertConflict QueryOnConflict                { get; protected set; } = OnInsertConflict.NONE;
@@ -257,23 +262,25 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType Reset() {
         _logger.LogDebug("Resetting query to initial state.");
 
-        this.QueryDistinct   = false;
-        this.QueryFrom       = new List<From  <DBQueryType>>();
-        this.QuerySelect     = new List<Select<DBQueryType>>();
-        this.QueryJoin       = new List<Join  <DBQueryType>>();
-        this.QueryWhere      = new List<Where <DBQueryType>>();
-        this.QueryHaving     = new List<Where <DBQueryType>>();
-        this.QuerySet        = new List<Where <DBQueryType>>();
-        this.QueryUnion      = new List<Union <DBQueryType>>();
-        this.QueryValues     = new List<Dictionary<string, dynamic>>();
-        this.QueryInto       = null;
-        this.QueryGroup      = new List<GroupBy>();
-        this.QueryOrder      = new List<OrderBy>();
-        this.QueryLimit      = null;
-        this.QueryType       = QueryType.RAW;
-        this.QueryOnConflict = OnInsertConflict.NONE;
-        this.ParentQuery     = null;
-        this.QueryUnionAlias = null;
+        this.QueryDistinct            = false;
+        this.QueryFrom                = new List<From  <DBQueryType>>();
+        this.QuerySelect              = new List<Select<DBQueryType>>();
+        this.QueryJoin                = new List<Join  <DBQueryType>>();
+        this.QueryWhere               = new List<Where <DBQueryType>>();
+        this.QueryHaving              = new List<Where <DBQueryType>>();
+        this.QuerySet                 = new List<Where <DBQueryType>>();
+        this.QueryUnion               = new List<Union <DBQueryType>>();
+        this.QueryValues              = new List<Dictionary<string, dynamic>>();
+        this.QueryInto                = null;
+        this.QueryGroup               = new List<GroupBy>();
+        this.QueryOrder               = new List<OrderBy>();
+        this.QueryLimit               = null;
+        this.QueryType                = QueryType.RAW;
+        this.RawQueryType             = QueryType.RAW;
+        this.QueryOnConflict          = OnInsertConflict.NONE;
+        this.QueryOnConflictKeyColumn = string.Empty;
+        this.ParentQuery              = null;
+        this.QueryUnionAlias          = null;
 
         this.ResetPreparedData();
 
@@ -287,10 +294,12 @@ public class Query<DBQueryType> : Renderable
     public virtual DBQueryType ResetPreparedData() {
         _logger.LogDebug("Resetting prepared data and rendered strings.");
 
-        this.QueryRenderedString = null;
-        this.QueryPreparedString = null;
-        this.QueryRenderedData   = new Dictionary<string, string>();
-        this.QueryPreparedData   = new Dictionary<string, PreparedValue>();
+        if (this.QueryType != QueryType.RAW) {
+            this.QueryRenderedString = null;
+            this.QueryPreparedString = null;
+            this.QueryRenderedData   = new Dictionary<string, string>();
+            this.QueryPreparedData   = new Dictionary<string, PreparedValue>();
+        }
 
         return (DBQueryType)this;
     }
@@ -508,6 +517,19 @@ public class Query<DBQueryType> : Renderable
         _logger.LogDebug("Setting QueryType from {Old} to {New}", this.QueryType, queryType);
 
         this.QueryType = queryType;
+
+        return (DBQueryType) this;
+    }
+
+    /// <summary>
+    /// Sets the underlying query type for RAW queries.
+    /// </summary>
+    /// <param name="queryType">The query type.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType SetRawQueryType(QueryType queryType) {
+        _logger.LogDebug("Setting RAW QueryType from {Old} to {New}", this.QueryType, queryType);
+
+        this.RawQueryType = queryType;
 
         return (DBQueryType) this;
     }
@@ -2769,8 +2791,11 @@ public class Query<DBQueryType> : Renderable
     /// <param name="query">The raw query string.</param>
     /// <param name="queryPreparedString">The prepared query string.</param>
     /// <returns>The current query instance.</returns>
-    public DBQueryType Raw(string query, string queryPreparedString) {
+    public DBQueryType Raw(string query, string queryPreparedString, QueryType queryType = QueryType.RAW) {
+        _logger.LogDebug("Set RAW query. Type={QueryType}, QueryType={QueryType}, PreparedQueryString={PreparedQueryString}", queryType, query, queryPreparedString);
+
         this.SetQueryType(QueryType.RAW);
+        this.SetRawQueryType(queryType);
 
         this.QueryRenderedString = query;
         this.QueryPreparedString = queryPreparedString;
@@ -2784,8 +2809,8 @@ public class Query<DBQueryType> : Renderable
     /// </summary>
     /// <param name="query">The raw query string.</param>
     /// <returns>The current query instance.</returns>
-    public DBQueryType Raw(string query) {
-        return this.Raw(query, query);
+    public DBQueryType Raw(string query, QueryType queryType = QueryType.RAW) {
+        return this.Raw(query, query, queryType);
     }
 
     /// <summary>
@@ -2794,12 +2819,10 @@ public class Query<DBQueryType> : Renderable
     /// <param name="query">The raw query string.</param>
     /// <param name="queryPreparedData">The prepared data dictionary.</param>
     /// <returns>The current query instance.</returns>
-    public DBQueryType Raw(string query, Dictionary<string, PreparedValue> queryPreparedData) {
-        this.SetQueryType(QueryType.RAW);
-
+    public DBQueryType Raw(string query, Dictionary<string, PreparedValue> queryPreparedData, QueryType queryType = QueryType.RAW) {
         this.QueryPreparedData = queryPreparedData;
 
-        return this.Raw(query);
+        return this.Raw(query, queryType);
     }
 
     /// <summary>
@@ -2808,13 +2831,35 @@ public class Query<DBQueryType> : Renderable
     /// <param name="query">The raw query string.</param>
     /// <param name="queryPreparedData">The prepared data dictionary.</param>
     /// <returns>The current query instance.</returns>
-    public DBQueryType Raw(string query, Dictionary<string, dynamic> queryPreparedData) {
-        this.SetQueryType(QueryType.RAW);
-
+    public DBQueryType Raw(string query, Dictionary<string, dynamic> queryPreparedData, QueryType queryType = QueryType.RAW) {
         return this.Raw(query, queryPreparedData.ToDictionary(
             dataItem => dataItem.Key, 
             dataItem => new PreparedValue { Value = dataItem.Value, EscapeValue = true }
-        ));
+        ), queryType);
+    }
+
+    /// <summary>
+    /// Adds a prepared value to the query with the specified key.
+    /// </summary>
+    /// <param name="key">The unique key associated with the prepared value. Cannot be null or empty.</param>
+    /// <param name="value">The value to associate with the specified key. Can be of any type.</param>
+    /// <returns>The current query instance.</returns>
+    public DBQueryType AddPreparedValue(string key, dynamic value) {
+        if (this.QueryPreparedData.ContainsKey(key)) {
+            _logger.LogWarning("Tried to add an existing prepared value. Key={Key}", key);
+
+            return (DBQueryType)this;
+        }
+
+        _logger.LogDebug("Added RAW query prepared value. Key={Key} Total Prepared Values={Count}", key, this.QueryPreparedData.Count);
+
+        this.QueryPreparedData.Add(key, new PreparedValue {
+            Value       = value,
+            EscapeValue = true
+        });
+        this.Touch();
+
+        return (DBQueryType)this;
     }
     #endregion
     #endregion
