@@ -90,7 +90,8 @@ This workflow copies rows from a CSV file into a database table (equivalent to `
 
 > 📝 **Note**: With the current Query Builder you must create the destination table beforehand (for example with `CreateTable<T>()`).
 
-```csharp
+::: code-group
+```csharp [C#]
 var readCSVFunction = new Unleasharp.DB.DuckDB.Functions.ReadCSVFunction {
     Path    = "flights.csv",
     Delim   = "|",
@@ -109,9 +110,22 @@ int insertedFromCSV = dbConnector.QueryBuilder().Build(query => query
 ).Execute<int>();
 ```
 
+```sql [DuckDB SQL]
+COPY
+    "flights"
+FROM
+    'flights.csv' (
+        DELIM '|',
+        HEADER
+    )
+;
+```
+:::
+
 If the table already exists you may also target a table by name (no class mapping required) and dump the CSV contents directly into it:
 
-```csharp
+::: code-group
+```csharp [C#]
 var readCSVFunction = new Unleasharp.DB.DuckDB.Functions.ReadCSVFunction {
     Path    = "flights.csv",
     Delim   = "|",
@@ -129,6 +143,17 @@ int insertedFromCSV = dbConnector.QueryBuilder().Build(query => query
 ).Execute<int>();
 ```
 
+```sql [DuckDB SQL]
+COPY
+    "raw_table_name"
+FROM
+    'flights.csv' (
+        DELIM '|',
+        HEADER
+    )
+;
+```
+:::
 
 ### CSV to Rows
 
@@ -136,7 +161,8 @@ DuckDB allows direct interaction with CSV data using regular queries, reading da
 
 This method insert the data from a CSV file into a table. It is the equivalent to `SELECT * FROM read_csv('csv_file.csv')`.
 
-```csharp
+::: code-group
+```csharp [C#]
 var readCSVFunction = new Unleasharp.DB.DuckDB.Functions.ReadCSVFunction {
     Path    = "flights.csv",
     Delim   = "|",
@@ -154,6 +180,23 @@ List<Flights> csvFlights = dbConnector.QueryBuilder().Build(query => query
     .From(readCSVFunction)
 ).ToList<Flights>();
 ```
+
+```sql [DuckDB SQL]
+SELECT
+    *
+FROM
+    read_csv('flights.csv',
+        columns = {
+            'FlightDate':     'DATE',
+            'UniqueCarrier':  'VARCHAR',
+            'OriginCityName': 'VARCHAR',
+            'DestCityName':   'VARCHAR'
+        },
+        delim  = '|',
+        header = true
+    )
+```
+:::
 
 ## JSON
 
@@ -213,7 +256,8 @@ This workflow copies objects from a JSON file into a database table (equivalent 
 
 > 📝 **Note**: With the current Query Builder you must create the destination table beforehand (for example with `CreateTable<T>()`).
 
-```csharp
+::: code-group
+```csharp [C#]
 var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
     Path    = "todos.json",
     Format  = JSONFormat.Array,
@@ -227,13 +271,22 @@ var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
 
 dbConnector.QueryBuilder().Build(query => query.CreateTable<Todos>()).Execute<bool>();
 int insertedFromJSON = dbConnector.QueryBuilder().Build(query => query
-    .CopyIntoFromJSON<Todos>(readJsonFunction)
+    .CopyIntoFromJSON<Todos>(readJSONFunction)
 ).Execute<int>();
 ```
 
+```sql [DuckDB SQL]
+COPY
+    "todo"
+FROM
+    'todos.json' (ARRAY);
+```
+:::
+
 If the table already exists you may also target a table by name (no class mapping required) and dump the JSON contents directly into it:
 
-```csharp
+::: code-group
+```csharp [C#]
 var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
     Path    = "todos.json",
     Format  = JSONFormat.Array,
@@ -246,10 +299,17 @@ var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
 };
 
 int insertedFromJSON = dbConnector.QueryBuilder().Build(query => query
-    .CopyIntoFromJSON("todos", readJsonFunction)
+    .CopyIntoFromJSON("raw_table_name", readJSONFunction)
 ).Execute<int>();
 ```
 
+```sql [DuckDB SQL]
+COPY
+    "raw_table_name"
+FROM
+    'todos.json' (ARRAY);
+```
+:::
 
 ### JSON to Rows
 
@@ -257,7 +317,8 @@ DuckDB allows direct interaction with JSON data using regular queries, reading d
 
 This method insert the data from a JSON file into a table. It is the equivalent to `SELECT * FROM read_json('json_file.json')`.
 
-```csharp
+::: code-group
+```csharp [C#]
 var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
     Path    = "todos.json",
     Format  = JSONFormat.Array,
@@ -271,10 +332,28 @@ var readJSONFunction = new Unleasharp.DB.DuckDB.Functions.ReadJSONFunction {
 
 List<Todos> jsonTodos = dbConnector.QueryBuilder().Build(query => query
     .Select()
-    .From(readJsonFunction)
+    .From(readJSONFunction)
     .Where<Todos>("userId", 1)
 ).ToList<Todos>();
 ```
+
+```sql [DuckDB SQL]
+SELECT
+    *
+FROM
+    read_json('todos.json',
+        format  = 'array',
+        columns = {
+            'id':        'UBIGINT',
+            'userId':    'UBIGINT',
+            'title':     'VARCHAR',
+            'completed': 'BOOLEAN'
+        }
+    )
+WHERE
+    "userId"=1
+```
+:::
 
 ## Parquet
 
@@ -321,8 +400,9 @@ This workflow copies objects from a Parquet file into a database table (equivale
 
 > 📝 **Note**: With the current Query Builder you must create the destination table beforehand (for example with `CreateTable<T>()`).
 
-```csharp
-ReadParquetFunction readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
+::: code-group
+```csharp [C#]
+var readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
     Path = "test.parquet",
 };
 
@@ -332,18 +412,34 @@ int InsertedFromParquet = dbConnector.QueryBuilder().Build(query => query
 ).Execute<int>();
 ```
 
+```sql [DuckDB SQL]
+COPY
+    "parquet_test"
+FROM
+    'test.parquet';
+```
+:::
+
 If the table already exists you may also target a table by name (no class mapping required) and dump the Parquet contents directly into it:
 
-```csharp
-ReadParquetFunction readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
+::: code-group
+```csharp [C#]
+var readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
     Path = "test.parquet",
 };
 
 int InsertedFromParquet = dbConnector.QueryBuilder().Build(query => query
-    .CopyIntoFromParquet("parquet_test", readParquetFunction)
+    .CopyIntoFromParquet("raw_table_name", readParquetFunction)
 ).Execute<int>();
 ```
 
+```sql [DuckDB SQL]
+COPY
+    "raw_table_name"
+FROM
+    'test.parquet';
+```
+:::
 
 ### Parquet to Rows
 
@@ -351,8 +447,9 @@ DuckDB allows direct interaction with Parquet data using regular queries, readin
 
 This method insert the data from a Parquet file into a table. It is the equivalent to `SELECT * FROM read_parquet('parquet_file.parquet')`.
 
-```csharp
-ReadParquetFunction readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
+::: code-group
+```csharp [C#]
+var readParquetFunction = new Unleasharp.DB.DuckDB.Functions.ReadParquetFunction {
     Path = "test.parquet",
 };
 
@@ -362,3 +459,13 @@ List<TestParquet> parquetEntries = dbConnector.QueryBuilder().Build(query => que
     .Limit(100)
 ).ToList<TestParquet>();
 ```
+
+```sql [DuckDB SQL]
+SELECT
+    *
+FROM
+    read_parquet('test.parquet')
+LIMIT
+    100 OFFSET 0
+```
+:::
