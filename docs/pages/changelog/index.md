@@ -23,18 +23,18 @@
 - ✨ Add `Query.Is<T>()`
 - ✨ Add `Query.IsNot<T>()`
 - ✨ Add `Query.WhereNotIn<T>()`
+- ✨ `DuckDB` Add `Query.__GetColumnDefinition()` data type check for column length in to avoid setting length to colum data types that do not allow it
 - 🔄 Revamp `Connector` database connection management logic
 - 🔄 Remove unused `IConnectorManager`
 - 🔄 Update `QueryBuilder` enumerators logic
 - 🔄 Update `QueryBuilder.Execute<T>()` to adjust to latest query execution flow changes
 - 🔄 Connector generic database logic is now handled by base class and not by each implementation
 - 🔄 `PostgreSQL` Update `QueryBuilder._PrepareDbCommand()` to add casted `NpgsqlParameter` to `NpgsqlCommand` instead of adding anonymous object
-- 🔄 `DuckDB` Add `Query.__GetColumnDefinition()` data type check for column length in to avoid setting length to colum data types that do not allow it
 - 🔄 `DuckDB` Update `Query.__GetMemberInfoDuckDBParameter()` to convert whole numbers to their specific types
 - 🔄 `DuckDB` Update `Query.__GetColumnDefinition()` and `Query.__GetMemberInfoDuckDBParameter()` to handle `Enums` as strings
 - 🔄 `DuckDB` Update `QueryBuilder._PrepareDbCommand()` to improve data type management
-- 🔧 Revert `Query._RenderSelectSentence()` removal of `SELECT_UNION` check on `SELECT(*)`
-- 🔧 `DuckDB` Fix `QueryBuilder._HandleQueryResult()` to handle `UnmanagedMemoryStream` and store them as `MemoryStream`
+- 🐛 Revert `Query._RenderSelectSentence()` removal of `SELECT_UNION` check on `SELECT(*)`
+- 🐛 `DuckDB` Fix `QueryBuilder._HandleQueryResult()` to handle `UnmanagedMemoryStream` and store them as `MemoryStream`
 
 ## v1.7.1 (2025-09-14)
 - ✨ `DuckDB` Added support for `DuckDB`
@@ -56,8 +56,8 @@
 - ✨ Add `byte[]` array rendering to `Query._RenderPrepared()`
 - 🔄 `PostgreSQL` Update `Query.Value<T>()` to avoid rendering system columns on insert
 - 🔄 `MSSQSL` Update `Query.Value<T>()` to avoid rendering system columns on insert
-- 🔧 Fix `Query.Set<T>()`
-- 🔧 Fix `Query.Select<T>()`
+- 🐛 Fix `Query.Set<T>()`
+- 🐛 Fix `Query.Select<T>()`
 
 ## v1.5.4 (2025-09-01)
 - ✨ Add XML documentation to code
@@ -68,7 +68,7 @@
 ## v1.5.2 (2025-08-30)
 - ✨ Add `Query._Engine`
 - 🔄 Improve `ConnectorManager` thread safety
-- 🔧 Fix `Query.Select<T>()` not taking `SystemColumn.Name` property as the system column name to be retrieved
+- 🐛 Fix `Query.Select<T>()` not taking `SystemColumn.Name` property as the system column name to be retrieved
 
 ## v1.5.1 (2025-08-30)
 - ✨ Add `SchemaDefinition.SystemColumn`
@@ -86,7 +86,7 @@
 ## v1.4.1 (2025-08-28)
 - ✨ `MSSQL` Added support for `Microsoft SQL Server`
 - ✨ Add `Query._GetKeyColumnName()`
-- 🔧 Fix table key rendering on table create
+- 🐛 Fix table key rendering on table create
 
 ## v1.4.0 (2025-08-28)
 - ✨ Add `SchemaDefinition`/`ForeignKey` constructor to support direct reference for table classes
@@ -111,7 +111,7 @@
 - ✨ Add `ConnectorManager.WithAfterQueryExecutionAction()`
 - 🔄 Update `ExtensionMethods.DataRow` to avoid serializing values not retrieved by a query result
 - 🔄 Update `QueryBuilder.OnQueryExceptionAction` to now take the query and the exception as parameters
-- 🔧 Fix `QueryBuilder.OnQueryExceptionAction()` invocation missing the query argument
+- 🐛 Fix `QueryBuilder.OnQueryExceptionAction()` invocation missing the query argument
 
 ## v1.3.0 (2025-08-25)
 - ✨ Add `Query Expression` support for query building: `Select`, `Set`, `Value`, `Where`, `WhereIn`, `WhereLike`, `GroupBy`, `OrderBy`
