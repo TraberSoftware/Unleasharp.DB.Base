@@ -20,6 +20,7 @@ export default defineConfig({
     logo: '/img/logo-tiny.png',
     nav: [
       { text: "🏛️ Foundation",       link: "/"                  },
+      { text: "📝 Changelog",        link: "/changelog"         },
       { text: "🚀 Getting Started",  link: "/getting-started/"  },
       { text: "🗺️ Data Mapping",     link: "/data-mapping/"     },
       { text: "📋 Table Operations", link: "/table-operations/" },
