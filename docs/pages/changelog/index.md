@@ -2,11 +2,11 @@
 
 ## v1.8.3 (2025-09-22)
 
-- ✨ `DuckDB` Added full support for importing from JSON and Parquet files
-- 🔄 Improved the logic for determining query type execution: Now, when the `QueryType` is `RAW`, the builder uses `RawQueryType` rather than always `QueryType`
+- ✨ `DuckDB` Add full support for importing from JSON and Parquet files
+- 🔄 Improve the logic for determining query type execution: Now, when the `QueryType` is `RAW`, the builder uses `RawQueryType` rather than always `QueryType`
 
 ## v1.8.2 (2025-09-21)
-- 🔄 Added debug logging to help tracing library bugs and query errors
+- ✨ Add debug logging to help tracing library bugs and query errors
 - 🔧 `DuckDB` Fix duplicate `RETURNING {column}` rendering on `INSERT`
 
 ## v1.8.1 (2025-09-20)
