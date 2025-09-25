@@ -159,7 +159,7 @@ FROM
 
 DuckDB allows direct interaction with CSV data using regular queries, reading data from a CSV file.
 
-This method insert the data from a CSV file into a table. It is the equivalent to `SELECT * FROM read_csv('csv_file.csv')`.
+This method reads the data from a CSV file as a `List<T>` of rows. It is the equivalent to `SELECT * FROM read_csv('csv_file.csv')`.
 
 ::: code-group
 ```csharp [C#]
@@ -315,7 +315,7 @@ FROM
 
 DuckDB allows direct interaction with JSON data using regular queries, reading data from a JSON file.
 
-This method insert the data from a JSON file into a table. It is the equivalent to `SELECT * FROM read_json('json_file.json')`.
+This method reads the data from a JSON file as a `List<T>` of rows. It is the equivalent to `SELECT * FROM read_json('json_file.json')`.
 
 ::: code-group
 ```csharp [C#]
@@ -445,7 +445,7 @@ FROM
 
 DuckDB allows direct interaction with Parquet data using regular queries, reading data from a Parquet file.
 
-This method insert the data from a Parquet file into a table. It is the equivalent to `SELECT * FROM read_parquet('parquet_file.parquet')`.
+This method reads the data from a Parquet file as a `List<T>` of rows. It is the equivalent to `SELECT * FROM read_parquet('parquet_file.parquet')`.
 
 ::: code-group
 ```csharp [C#]
