@@ -1,5 +1,10 @@
 ﻿# 📝 Changelog
 
+## v1.8.4 (2025-10-02)
+
+- ✨ Add `Query.WhereExists()`
+- ✨ Add `Query.WhereNotExists()`
+
 ## v1.8.3 (2025-09-22)
 
 - ✨ `DuckDB` Add full support for importing from JSON and Parquet files
