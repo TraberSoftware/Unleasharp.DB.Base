@@ -80,7 +80,11 @@ public enum WhereComparer {
     [Description("IN")]
     IN,
     [Description("NOT IN")]
-    NOT_IN
+    NOT_IN,
+    [Description("EXISTS")]
+    EXISTS,
+    [Description("NOT EXISTS")]
+    NOT_EXISTS
 }
 
 /// <summary>

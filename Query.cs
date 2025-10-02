@@ -2510,6 +2510,64 @@ public class Query<DBQueryType> : Renderable
             Subquery = subquery
         });
     }
+
+    /// <summary>
+    /// Adds an EXISTS clause with a subquery.
+    /// </summary>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereExists(Query<DBQueryType> subquery) {
+        return this.Where(new Where<DBQueryType> {
+            Subquery = subquery,
+            Comparer = WhereComparer.EXISTS
+        });
+    }
+
+    /// <summary>
+    /// Adds an EXISTS clause with a subquery.
+    /// </summary>
+    /// <param name="action">The action to populate the DBQueryType object.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereExists(Action<Query<DBQueryType>> action) {
+        DBQueryType subquery = GetInstance();
+        if (action != null) {
+            action.Invoke(subquery);
+        }
+
+        return this.Where(new Where<DBQueryType> {
+            Subquery = subquery,
+            Comparer = WhereComparer.EXISTS
+        });
+    }
+
+    /// <summary>
+    /// Adds an NOT EXISTS clause with a subquery.
+    /// </summary>
+    /// <param name="subquery">The subquery.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereNotExists(Query<DBQueryType> subquery) {
+        return this.Where(new Where<DBQueryType> {
+            Subquery = subquery,
+            Comparer = WhereComparer.NOT_EXISTS
+        });
+    }
+
+    /// <summary>
+    /// Adds an NOT EXISTS clause with a subquery.
+    /// </summary>
+    /// <param name="action">The action to populate the DBQueryType object.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType WhereNotExists(Action<Query<DBQueryType>> action) {
+        DBQueryType subquery = GetInstance();
+        if (action != null) {
+            action.Invoke(subquery);
+        }
+
+        return this.Where(new Where<DBQueryType> {
+            Subquery = subquery,
+            Comparer = WhereComparer.NOT_EXISTS
+        });
+    }
     #endregion
 
     #region Query building - Where LIKE
