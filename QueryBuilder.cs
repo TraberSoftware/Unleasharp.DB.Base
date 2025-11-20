@@ -613,7 +613,8 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
             }
         }
 
-        this.DBQuery = originalQuery;
+        // We make sure the DBQuery is reset after iteration
+        this.DBQuery.Reset();
     }
 
     /// <summary>
@@ -671,9 +672,14 @@ public class QueryBuilder<QueryBuilderType, DBConnectorType, DBQueryType, DBConn
                     yield return row;
                 }
             }
+            else {
+                endFound = true;
+                break;
+            }
         }
 
-        this.DBQuery = originalQuery;
+        // We make sure the DBQuery is reset after iteration
+        this.DBQuery.Reset();
     }
     #endregion
 

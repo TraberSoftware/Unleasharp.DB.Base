@@ -992,6 +992,30 @@ public class Query<DBQueryType> : Renderable
     }
 
     /// <summary>
+    /// Adds a value dictionary for INSERT queries.
+    /// </summary>
+    /// <param name="row">The value DataRow.</param>
+    /// <param name="skipNullValues">Whether to skip null values.</param>
+    /// <returns>The current query instance.</returns>
+    public virtual DBQueryType Value(DataRow row, bool skipNullValues = false) {
+        Dictionary<string, dynamic> rowDictionary = new Dictionary<string, dynamic>();
+
+        foreach (DataColumn dataColumn in row.Table.Columns) {
+            string column = dataColumn.ColumnName;
+            if (!this.QueryColumns.Contains(column)) {
+                this.QueryColumns.Add(column);
+            }
+
+            rowDictionary.Add(column, row[column]);
+        }
+        this.QueryValues.Add(rowDictionary);
+
+        this.Touch();
+        _logger.LogDebug("Added VALUES row. Total VALUES rows={Count} Total COLUMNS={Columns}", this.QueryValues.Count, this.QueryColumns.Count);
+        return (DBQueryType) this;
+    }
+
+    /// <summary>
     /// Adds a value object for INSERT queries.
     /// </summary>
     /// <typeparam name="T">The value type.</typeparam>
