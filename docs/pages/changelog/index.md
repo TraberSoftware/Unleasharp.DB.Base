@@ -1,5 +1,10 @@
 ﻿# 📝 Changelog
 
+## v1.8.5 (2025-11-20)
+
+- ✨ Add `Add Query.Value(DataRow row)`
+- 🔄 Improve `QueryBuilder.IterateByOffset<T>()` and `QueryBuilder.Iterate()` to properly stop when found end of the iteration
+
 ## v1.8.4 (2025-10-02)
 
 - ✨ Add `Query.WhereExists()`
